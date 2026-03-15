@@ -34,6 +34,9 @@ mobile-install:
 mobile:
 	cd mobile && npx expo start
 
+mobile-fresh:
+	cd mobile && npx expo start --clear
+
 mobile-lint:
 	cd mobile && npm run lint
 
