@@ -11,22 +11,22 @@ lint:
 	pdm run pre-commit run --all-files
 
 check-types:
-	pdm run mypy src/app
+	pdm run mypy backend/app
 
 test:
-	cd src && pdm run pytest .
+	cd backend && pdm run pytest .
 
 run-http:
-	cd src && pdm run uvicorn app.http.main:app --reload --port $(SERVER_PORT)
+	cd backend && pdm run uvicorn app.http.main:app --reload --port $(SERVER_PORT)
 
 create-migration:
-	cd src && pdm run alembic revision --autogenerate -m "$(message)"
+	cd backend && pdm run alembic revision --autogenerate -m "$(message)"
 
 migrate:
-	cd src && pdm run alembic upgrade head
+	cd backend && pdm run alembic upgrade head
 
 db-reset:
-	rm -f src/wizwiz.db && cd src && pdm run alembic upgrade head
+	rm -f backend/wizwiz.db && cd backend && pdm run alembic upgrade head
 
 mobile-install:
 	cd mobile && npm install
