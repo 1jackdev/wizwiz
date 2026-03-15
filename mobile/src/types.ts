@@ -1,0 +1,31 @@
+export enum CharacterClass {
+  BARBARIAN = 'Barbarian',
+  BARD = 'Bard',
+  CLERIC = 'Cleric',
+  DRUID = 'Druid',
+  FIGHTER = 'Fighter',
+  MONK = 'Monk',
+  PALADIN = 'Paladin',
+  RANGER = 'Ranger',
+  ROGUE = 'Rogue',
+  SORCERER = 'Sorcerer',
+  WARLOCK = 'Warlock',
+  WIZARD = 'Wizard',
+}
+
+export enum Species {
+  HUMAN = 'Human',
+  HIGH_ELF = 'High Elf',
+  WOOD_ELF = 'Wood Elf',
+  DARK_ELF = 'Dark Elf',
+  HILL_DWARF = 'Hill Dwarf',
+  MOUNTAIN_DWARF = 'Mountain Dwarf',
+  LIGHTFOOT_HALFLING = 'Lightfoot Halfling',
+  STOUT_HALFLING = 'Stout Halfling',
+  HALF_ELF = 'Half Elf',
+  HALF_ORC = 'Half Orc',
+  TIEFLING = 'Tiefling',
+  DRAGONBORN = 'Dragonborn',
+  FOREST_GNOME = 'Forest Gnome',
+  ROCK_GNOME = 'Rock Gnome',
+}

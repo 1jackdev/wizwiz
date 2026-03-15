@@ -1,0 +1,48 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-docstring-first
+        types: [python]
+        files: ^src/
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        types: [python]
+        files: ^src/
+      - id: check-case-conflict
+        types: [python]
+        files: ^src/
+      - id: check-toml
+        files: ^src/
+      - id: check-yaml
+        files: ^src/
+      - id: check-ast
+        types: [python]
+        files: ^src/
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort
+        files: ^src/
+  - repo: https://github.com/python/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        args: [--safe]
+        files: ^src/
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        types: [python]
+        files: ^src/
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: oxlint
+        language: node
+        entry: mobile/node_modules/.bin/oxlint
+        args: [--deny-warnings]
+        files: ^mobile/src/
+        pass_filenames: false

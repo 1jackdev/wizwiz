@@ -1,0 +1,24 @@
+# Build / packaging
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual envs, caches, tooling
+.venv/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+.idea
+.DS_Store
+
+# SQLite database
+*.db
+
+# Mobile
+mobile/node_modules
+mobile/.expo

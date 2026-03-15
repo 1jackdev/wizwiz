@@ -1,0 +1,85 @@
+from enum import StrEnum
+
+
+class CharacterClass(StrEnum):
+    BARBARIAN = "BARBARIAN"
+    BARD = "BARD"
+    CLERIC = "CLERIC"
+    DRUID = "DRUID"
+    FIGHTER = "FIGHTER"
+    MONK = "MONK"
+    PALADIN = "PALADIN"
+    RANGER = "RANGER"
+    ROGUE = "ROGUE"
+    SORCERER = "SORCERER"
+    WARLOCK = "WARLOCK"
+    WIZARD = "WIZARD"
+
+
+class CharacterSpecies(StrEnum):
+    HUMAN = "HUMAN"
+    HIGH_ELF = "HIGH_ELF"
+    WOOD_ELF = "WOOD_ELF"
+    DARK_ELF = "DARK_ELF"
+    HILL_DWARF = "HILL_DWARF"
+    MOUNTAIN_DWARF = "MOUNTAIN_DWARF"
+    LIGHTFOOT_HALFLING = "LIGHTFOOT_HALFLING"
+    STOUT_HALFLING = "STOUT_HALFLING"
+    HALF_ELF = "HALF_ELF"
+    HALF_ORC = "HALF_ORC"
+    TIEFLING = "TIEFLING"
+    DRAGONBORN = "DRAGONBORN"
+    FOREST_GNOME = "FOREST_GNOME"
+    ROCK_GNOME = "ROCK_GNOME"
+
+
+class AbilityName(StrEnum):
+    STRENGTH = "STRENGTH"
+    DEXTERITY = "DEXTERITY"
+    CONSTITUTION = "CONSTITUTION"
+    INTELLIGENCE = "INTELLIGENCE"
+    WISDOM = "WISDOM"
+    CHARISMA = "CHARISMA"
+
+
+class SkillName(StrEnum):
+    ACROBATICS = "ACROBATICS"
+    ANIMAL_HANDLING = "ANIMAL_HANDLING"
+    ARCANA = "ARCANA"
+    ATHLETICS = "ATHLETICS"
+    DECEPTION = "DECEPTION"
+    HISTORY = "HISTORY"
+    INSIGHT = "INSIGHT"
+    INTIMIDATION = "INTIMIDATION"
+    INVESTIGATION = "INVESTIGATION"
+    MEDICINE = "MEDICINE"
+    NATURE = "NATURE"
+    PERCEPTION = "PERCEPTION"
+    PERFORMANCE = "PERFORMANCE"
+    PERSUASION = "PERSUASION"
+    RELIGION = "RELIGION"
+    SLEIGHT_OF_HAND = "SLEIGHT_OF_HAND"
+    STEALTH = "STEALTH"
+    SURVIVAL = "SURVIVAL"
+
+
+class ProficiencyLevel(StrEnum):
+    NONE = "NONE"
+    PROFICIENT = "PROFICIENT"
+    EXPERTISE = "EXPERTISE"
+
+    def to_int(self) -> int:
+        return _PROFICIENCY_INT[self]
+
+    @staticmethod
+    def from_int(value: int) -> "ProficiencyLevel":
+        return _PROFICIENCY_LEVEL[value]
+
+
+_PROFICIENCY_INT = {
+    ProficiencyLevel.NONE: 0,
+    ProficiencyLevel.PROFICIENT: 1,
+    ProficiencyLevel.EXPERTISE: 2,
+}
+
+_PROFICIENCY_LEVEL = {v: k for k, v in _PROFICIENCY_INT.items()}
