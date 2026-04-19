@@ -13,6 +13,15 @@ const DIE_GLOW: Record<DieType, string> = {
   d20: '#6366F1',
 };
 
+const DIE_MAX: Record<DieType, number> = {
+  d4: 4,
+  d6: 6,
+  d8: 8,
+  d10: 10,
+  d12: 12,
+  d20: 20,
+};
+
 const DIE_SIZE = 72;
 const DOUBLE_TAP_DELAY = 300;
 
@@ -99,13 +108,13 @@ function RollingDie({
           transform: [{ translateX: posX }, { translateY: posY }, { rotate: spin }],
           shadowColor: glowColor,
           shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.9,
-          shadowRadius: 14,
+          shadowOpacity: 0.4,
+          shadowRadius: 6,
         },
       ]}
     >
       <Pressable onPress={onTap} style={styles.diePressable}>
-        <DieComponent value={result} size={DIE_SIZE} />
+        <DieComponent value={shouldRoll && result == null ? null : result ?? DIE_MAX[die.type]} size={DIE_SIZE} />
       </Pressable>
     </Animated.View>
   );
@@ -201,7 +210,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: DIE_SIZE,
     height: DIE_SIZE,
-    zIndex: 200,
+    zIndex: 90,
   },
   diePressable: {
     width: DIE_SIZE,
@@ -213,7 +222,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 200,
+    zIndex: 90,
   },
   hintText: {
     color: 'rgba(255,255,255,0.75)',

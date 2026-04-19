@@ -13,7 +13,8 @@ class UserFactory(Factory):
         model = User
 
     id = LazyFunction(uuid4)
-    username = "testuser"
+    email = "test@example.com"
+    is_dm = False
 
 
 class CharacterUpdateLogFactory(Factory):

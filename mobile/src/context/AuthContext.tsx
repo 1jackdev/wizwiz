@@ -1,21 +1,36 @@
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 import { login as apiLogin, register as apiRegister } from '../api/auth';
+import {
+  getUser,
+  promoteToDm as apiPromoteToDm,
+  UserInfo,
+} from '../api/user';
+
+export type ViewMode = 'player' | 'dm';
+
+const VIEW_MODE_KEY = '@wizwiz_view_mode';
 
 interface AuthContextValue {
   token: string | null;
   userId: string | null;
-  username: string | null;
+  email: string | null;
+  isDm: boolean;
+  viewMode: ViewMode;
+  setViewMode: (m: ViewMode) => Promise<void>;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  promoteToDm: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function decodeJwtPayload(token: string): { sub: string; username: string } {
+function decodeJwtPayload(token: string): { sub: string; email: string } {
   const payload = token.split('.')[1];
   const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
   return JSON.parse(atob(base64));
@@ -24,46 +39,95 @@ function decodeJwtPayload(token: string): { sub: string; username: string } {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [isDm, setIsDm] = useState(false);
+  const [viewMode, setViewModeState] = useState<ViewMode>('player');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    SecureStore.getItemAsync('access_token').then((stored) => {
-      applyToken(stored);
+    (async () => {
+      const stored = await SecureStore.getItemAsync('access_token');
+      const savedMode = (await AsyncStorage.getItem(VIEW_MODE_KEY)) as ViewMode | null;
+      if (savedMode === 'dm' || savedMode === 'player') {
+        setViewModeState(savedMode);
+      }
+      await applyToken(stored);
       setIsLoading(false);
-    });
+    })();
   }, []);
 
-  function applyToken(t: string | null) {
+  async function applyToken(t: string | null) {
     if (t) {
       const payload = decodeJwtPayload(t);
       setUserId(payload.sub);
-      setUsername(payload.username);
+      setEmail(payload.email);
+      setToken(t);
+      try {
+        const info = await getUser(payload.sub);
+        setIsDm(info.is_dm);
+      } catch {
+        setIsDm(false);
+      }
     } else {
       setUserId(null);
-      setUsername(null);
+      setEmail(null);
+      setIsDm(false);
+      setToken(null);
+      setViewModeState('player');
     }
-    setToken(t);
   }
 
-  async function login(user: string, password: string) {
-    const { access_token } = await apiLogin(user, password);
+  async function login(emailVal: string, password: string) {
+    const { access_token } = await apiLogin(emailVal, password);
     await SecureStore.setItemAsync('access_token', access_token);
-    applyToken(access_token);
+    await applyToken(access_token);
   }
 
-  async function register(user: string, password: string) {
-    await apiRegister(user, password);
-    await login(user, password);
+  async function register(emailVal: string, password: string) {
+    await apiRegister(emailVal, password);
+    await login(emailVal, password);
   }
 
   async function logout() {
     await SecureStore.deleteItemAsync('access_token');
-    applyToken(null);
+    await AsyncStorage.removeItem(VIEW_MODE_KEY);
+    await applyToken(null);
+  }
+
+  async function setViewMode(m: ViewMode) {
+    setViewModeState(m);
+    await AsyncStorage.setItem(VIEW_MODE_KEY, m);
+  }
+
+  async function promoteToDm() {
+    if (!userId) return;
+    const info: UserInfo = await apiPromoteToDm(userId);
+    setIsDm(info.is_dm);
+  }
+
+  async function refreshUser() {
+    if (!userId) return;
+    const info = await getUser(userId);
+    setIsDm(info.is_dm);
   }
 
   return (
-    <AuthContext.Provider value={{ token, userId, username, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        userId,
+        email,
+        isDm,
+        viewMode,
+        setViewMode,
+        isLoading,
+        login,
+        register,
+        logout,
+        promoteToDm,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

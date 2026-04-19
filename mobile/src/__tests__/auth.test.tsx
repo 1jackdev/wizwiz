@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as authApi from '../api/auth';
 import * as characterApi from '../api/character';
 import { AuthProvider } from '../context/AuthContext';
+import { CurrentCharacterProvider } from '../context/CurrentCharacterContext';
 import RootNavigator from '../navigation/RootNavigator';
 
 jest.mock('../api/auth');
@@ -18,17 +19,19 @@ const mockedGetItem = jest.mocked(SecureStore.getItemAsync);
 const mockedListCharacters = jest.mocked(characterApi.listCharacters);
 
 // Build a valid JWT-shaped token so decodeJwtPayload works in AuthContext
-function makeTestToken(userId = 'test-user-id', username = 'testuser') {
-  const payload = btoa(JSON.stringify({ sub: userId, username, exp: 9999999999 }));
+function makeTestToken(userId = 'test-user-id', email = 'test@example.com') {
+  const payload = btoa(JSON.stringify({ sub: userId, email, exp: 9999999999 }));
   return `header.${payload}.signature`;
 }
 
 function renderApp() {
   return render(
     <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <CurrentCharacterProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </CurrentCharacterProvider>
     </AuthProvider>
   );
 }
@@ -43,7 +46,7 @@ describe('auth flow', () => {
   it('shows sign in screen on launch when not authenticated', async () => {
     renderApp();
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Username')).toBeTruthy();
+      expect(screen.getByPlaceholderText('Email')).toBeTruthy();
       expect(screen.getByPlaceholderText('Password')).toBeTruthy();
     });
   });
@@ -53,14 +56,14 @@ describe('auth flow', () => {
 
     renderApp();
 
-    await waitFor(() => screen.getByPlaceholderText('Username'));
-    fireEvent.changeText(screen.getByPlaceholderText('Username'), 'jack');
+    await waitFor(() => screen.getByPlaceholderText('Email'));
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'jack@example.com');
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'password123');
     fireEvent.press(screen.getByText('Sign In'));
 
     await waitFor(() => {
       expect(screen.getByText('Characters')).toBeTruthy();
-      expect(screen.getByText('Combat')).toBeTruthy();
+      expect(screen.getByText('Actions')).toBeTruthy();
       expect(screen.getByText('Account')).toBeTruthy();
     });
   });
@@ -75,29 +78,29 @@ describe('auth flow', () => {
     fireEvent.press(screen.getByText("Don't have an account? Sign up"));
 
     await waitFor(() => screen.getByText('Sign Up'));
-    fireEvent.changeText(screen.getByPlaceholderText('Username'), 'newuser');
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'newuser@example.com');
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'password123');
     fireEvent.press(screen.getByText('Sign Up'));
 
     await waitFor(() => {
       expect(screen.getByText('Characters')).toBeTruthy();
-      expect(screen.getByText('Combat')).toBeTruthy();
+      expect(screen.getByText('Actions')).toBeTruthy();
       expect(screen.getByText('Account')).toBeTruthy();
     });
   });
 
   it('shows an error message on failed sign in', async () => {
-    mockedLogin.mockRejectedValue(new Error('Invalid username or password'));
+    mockedLogin.mockRejectedValue(new Error('Invalid email or password'));
 
     renderApp();
 
-    await waitFor(() => screen.getByPlaceholderText('Username'));
-    fireEvent.changeText(screen.getByPlaceholderText('Username'), 'jack');
+    await waitFor(() => screen.getByPlaceholderText('Email'));
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'jack@example.com');
     fireEvent.changeText(screen.getByPlaceholderText('Password'), 'wrongpassword');
     fireEvent.press(screen.getByText('Sign In'));
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid username or password')).toBeTruthy();
+      expect(screen.getByText('Invalid email or password')).toBeTruthy();
     });
   });
 });

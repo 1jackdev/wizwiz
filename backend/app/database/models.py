@@ -4,9 +4,11 @@ from uuid import UUID
 
 from sqlalchemy import (
     JSON,
+    Column,
     DateTime,
     ForeignKey,
     String,
+    Table,
     UniqueConstraint,
     Uuid,
     func,
@@ -34,8 +36,9 @@ class UserAccountORM(Base, BaseMixin):
     __tablename__ = "user_account"
 
     id: Mapped[PK]
-    username: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
+    is_dm: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     characters: Mapped[list["CharacterORM"]] = relationship(
         cascade="all, delete-orphan",
@@ -72,6 +75,7 @@ class CharacterORM(Base, BaseMixin):
     species: Mapped[str] = mapped_column(nullable=False)
     level: Mapped[int] = mapped_column(default=1, nullable=False)
     experience_points: Mapped[int] = mapped_column(default=0, nullable=False)
+    is_npc: Mapped[bool] = mapped_column(default=False, nullable=False, index=True)
 
     user_account: Mapped[UserAccountORM] = relationship(back_populates="characters")
 
@@ -125,6 +129,46 @@ class CharacterAbilityORM(Base, BaseMixin):
 
     __table_args__ = (
         UniqueConstraint("character_id", "ability_name", name="uq_character_ability"),
+    )
+
+
+campaign_character_table = Table(
+    "campaign_character",
+    Base.metadata,
+    Column(
+        "campaign_id",
+        Uuid(as_uuid=True, native_uuid=False),
+        ForeignKey("campaign.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "character_id",
+        Uuid(as_uuid=True, native_uuid=False),
+        ForeignKey("character.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
+class CampaignORM(Base, BaseMixin):
+    __tablename__ = "campaign"
+
+    id: Mapped[PK]
+    name: Mapped[str] = mapped_column(nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(nullable=True)
+    level: Mapped[int] = mapped_column(default=1, nullable=False)
+    invite_code: Mapped[str] = mapped_column(
+        nullable=False, unique=True, index=True
+    )
+    dm_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_account.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    dm: Mapped[UserAccountORM] = relationship()
+    characters: Mapped[list["CharacterORM"]] = relationship(
+        secondary=campaign_character_table,
     )
 
 

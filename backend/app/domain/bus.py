@@ -1,28 +1,34 @@
 from app.domain.errors import HandlerNotFoundError
 from app.domain.handlers import command, event
 from app.domain.messages import (
+    CampaignCharacterAdded,
+    CampaignCreated,
     CharacterCreated,
-    CharacterDeleted,
-    CharacterUpdated,
+    CreateCampaign,
     CreateCharacter,
+    CreateNpc,
     CreateUser,
-    DeleteCharacter,
+    JoinCampaign,
     Message,
-    UpdateCharacter,
+    PromoteToDm,
     UserCreated,
+    UserPromotedToDm,
 )
 
 HANDLERS: dict[type[Message], list[type]] = {
     # commands
     CreateCharacter: [command.CreateCharacterHandler],
-    UpdateCharacter: [command.UpdateCharacterHandler],
-    DeleteCharacter: [command.DeleteCharacterHandler],
     CreateUser: [command.CreateUserHandler],
+    PromoteToDm: [command.PromoteToDmHandler],
+    CreateNpc: [command.CreateNpcHandler],
+    CreateCampaign: [command.CreateCampaignHandler],
+    JoinCampaign: [command.JoinCampaignHandler],
     # events
     CharacterCreated: [event.CreateCharacter],
-    CharacterUpdated: [event.UpdateCharacter],
-    CharacterDeleted: [event.DeleteCharacter],
     UserCreated: [event.CreateUser],
+    UserPromotedToDm: [event.PromoteUserToDm],
+    CampaignCreated: [event.CreateCampaign],
+    CampaignCharacterAdded: [event.PersistCampaignCharacterAdded],
 }
 
 

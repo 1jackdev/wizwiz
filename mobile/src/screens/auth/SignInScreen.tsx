@@ -17,7 +17,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'SignIn'>;
 
 export default function SignInScreen({ navigation }: Props) {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function SignInScreen({ navigation }: Props) {
     setError('');
     setLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(email.trim(), password);
     } catch (e: any) {
       setError(e.message ?? 'Login failed');
     } finally {
@@ -40,11 +40,13 @@ export default function SignInScreen({ navigation }: Props) {
 
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Email"
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
-        value={username}
-        onChangeText={setUsername}
+        keyboardType="email-address"
+        autoComplete="email"
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
@@ -63,6 +65,10 @@ export default function SignInScreen({ navigation }: Props) {
         ) : (
           <Text style={styles.buttonText}>Sign In</Text>
         )}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+        <Text style={styles.link}>Forgot password?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
@@ -119,5 +125,6 @@ const styles = StyleSheet.create({
     color: colors.accent,
     textAlign: 'center',
     fontSize: 14,
+    marginBottom: 8,
   },
 });

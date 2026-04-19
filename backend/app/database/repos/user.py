@@ -29,22 +29,29 @@ class UserDB(UserRepo):
         orm = result.scalar_one_or_none()
         return user_from_orm(orm) if orm else None
 
-    def get_by_username(self, username: str) -> User | None:
+    def get_by_email(self, email: str) -> User | None:
         stmt = (
             select(UserAccountORM)
-            .filter_by(username=username)
+            .filter_by(email=email)
             .options(selectinload(UserAccountORM.characters))
         )
         result = self.db.execute(stmt)
         orm = result.scalar_one_or_none()
         return user_from_orm(orm) if orm else None
 
-    def search_by_username(self, username: str) -> User | None:
+    def search_by_email(self, email: str) -> User | None:
         stmt = (
             select(UserAccountORM)
-            .filter(UserAccountORM.username.contains(username))
+            .filter(UserAccountORM.email.contains(email))
             .options(selectinload(UserAccountORM.characters))
         )
         result = self.db.execute(stmt)
         orm = result.scalar_one_or_none()
         return user_from_orm(orm) if orm else None
+
+    def set_is_dm(self, user_id: UUID, is_dm: bool) -> None:
+        orm = self.db.get(UserAccountORM, user_id)
+        if orm is None:
+            raise ValueError("User not found")
+        orm.is_dm = is_dm
+        self.db.commit()

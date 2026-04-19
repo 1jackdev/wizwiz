@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { colors } from './src/theme';
 import { AuthProvider } from './src/context/AuthContext';
+import { CurrentCharacterProvider } from './src/context/CurrentCharacterContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 const navTheme = {
@@ -19,10 +20,12 @@ const navTheme = {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer theme={navTheme}>
-        <StatusBar style="dark" />
-        <RootNavigator />
-      </NavigationContainer>
+      <CurrentCharacterProvider>
+        <NavigationContainer theme={navTheme}>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </NavigationContainer>
+      </CurrentCharacterProvider>
     </AuthProvider>
   );
 }

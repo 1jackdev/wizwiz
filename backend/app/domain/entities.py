@@ -78,5 +78,6 @@ class SavingThrow(BaseModel):
 
 class User(BaseModel):
     id: UUID
-    username: str
+    email: str
     password_hash: str = Field(default="", exclude=True)
+    is_dm: bool = False

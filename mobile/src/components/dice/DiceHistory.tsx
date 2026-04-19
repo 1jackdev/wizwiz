@@ -13,8 +13,11 @@ import {
 import { useDice } from './DiceContext';
 import type { RollRecord } from './DiceContext';
 
-const COLLAPSED_HEIGHT = 64;
-const EXPANDED_HEIGHT = Dimensions.get('window').height * 0.65;
+type Step = 'thin' | 'peek' | 'full';
+
+const THIN_HEIGHT = 40;
+const PEEK_HEIGHT = 90;
+const FULL_HEIGHT = Dimensions.get('window').height * 0.65;
 
 function timeAgo(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -44,32 +47,30 @@ function RollEntryRow({ record }: { record: RollRecord }) {
   );
 }
 
+const HEIGHTS: Record<Step, number> = {
+  thin: THIN_HEIGHT,
+  peek: PEEK_HEIGHT,
+  full: FULL_HEIGHT,
+};
+
 export default function DiceHistory() {
   const { rollHistory, setHistoryExpanded } = useDice();
-  const [expanded, setExpanded] = useState(false);
-  const heightAnim = useRef(new Animated.Value(COLLAPSED_HEIGHT)).current;
+  const [step, setStep] = useState<Step>('thin');
+  const heightAnim = useRef(new Animated.Value(THIN_HEIGHT)).current;
 
-  const animateToExpanded = () => {
-    setExpanded(true);
-    setHistoryExpanded(true);
+  const animateTo = (next: Step) => {
+    setStep(next);
+    setHistoryExpanded(next === 'full');
     Animated.spring(heightAnim, {
-      toValue: EXPANDED_HEIGHT,
+      toValue: HEIGHTS[next],
       useNativeDriver: false,
       tension: 60,
       friction: 12,
     }).start();
   };
 
-  const animateToCollapsed = () => {
-    setExpanded(false);
-    setHistoryExpanded(false);
-    Animated.spring(heightAnim, {
-      toValue: COLLAPSED_HEIGHT,
-      useNativeDriver: false,
-      tension: 60,
-      friction: 12,
-    }).start();
-  };
+  const stepRef = useRef<Step>('thin');
+  stepRef.current = step;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -83,10 +84,23 @@ export default function DiceHistory() {
         _evt: GestureResponderEvent,
         gestureState: PanResponderGestureState
       ) => {
-        if (gestureState.dy < -40) {
-          animateToExpanded();
-        } else if (gestureState.dy > 40) {
-          animateToCollapsed();
+        const dy = gestureState.dy;
+        const current = stepRef.current;
+        const BIG = 80;
+        const SMALL = 20;
+
+        if (dy < -SMALL) {
+          if (current === 'thin') {
+            animateTo(dy < -BIG ? 'full' : 'peek');
+          } else if (current === 'peek') {
+            animateTo('full');
+          }
+        } else if (dy > SMALL) {
+          if (current === 'full') {
+            animateTo(dy > BIG ? 'thin' : 'peek');
+          } else if (current === 'peek') {
+            animateTo('thin');
+          }
         }
       },
     })
@@ -108,27 +122,21 @@ export default function DiceHistory() {
         </View>
       </View>
 
-      {expanded ? (
+      {step === 'full' ? (
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {rollHistory.length === 0 ? (
-            <Text style={styles.emptyText}>No rolls yet</Text>
-          ) : (
-            rollHistory.map((record) => <RollEntryRow key={record.id} record={record} />)
-          )}
+          {rollHistory.map((record) => (
+            <RollEntryRow key={record.id} record={record} />
+          ))}
         </ScrollView>
-      ) : (
+      ) : step === 'peek' ? (
         <View style={styles.collapsedContent}>
-          {lastRecord !== null ? (
-            <RollEntryRow record={lastRecord} />
-          ) : (
-            <Text style={styles.emptyText}>No rolls yet</Text>
-          )}
+          {lastRecord !== null ? <RollEntryRow record={lastRecord} /> : null}
         </View>
-      )}
+      ) : null}
     </Animated.View>
   );
 }
@@ -144,7 +152,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     zIndex: 101,
     overflow: 'hidden',
-    minHeight: 100,
   },
   header: {
     paddingBottom: 4,

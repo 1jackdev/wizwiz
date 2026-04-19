@@ -6,7 +6,7 @@ class HandlerNotFoundError(Exception):
     pass
 
 
-class UsernameAlreadyExistsError(BaseValidationError):
+class EmailAlreadyExistsError(BaseValidationError):
     pass
 
 
@@ -39,4 +39,32 @@ class InvalidCredentialsError(BaseValidationError):
 
 
 class NoUpdatesError(Exception):
+    pass
+
+
+class UserIsNotDmError(BaseValidationError):
+    pass
+
+
+class UnknownCampaignError(BaseValidationError):
+    pass
+
+
+class UnknownCharacterError(BaseValidationError):
+    pass
+
+
+class InvalidInviteCodeError(BaseValidationError):
+    pass
+
+
+class CharacterAlreadyInCampaignError(BaseValidationError):
+    pass
+
+
+class CharacterNotInCampaignError(BaseValidationError):
+    pass
+
+
+class NotCampaignOwnerError(BaseValidationError):
     pass

@@ -1,13 +1,13 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from app.domain.entities import User
 from app.domain.types import CharacterClass, CharacterSpecies
-from app.http.schemas.character import UpdateCharacterSchema
 
 if TYPE_CHECKING:
+    from app.domain.models.campaign import Campaign
     from app.domain.models.character import Character
 
 
@@ -16,17 +16,20 @@ class Message(ABC):
 
 
 @dataclass
-class CreateCharacter(Message):
+class CreateCharacterBase(Message):
     name: str
     character_class: CharacterClass
     species: CharacterSpecies
+
+
+@dataclass
+class CreateCharacter(CreateCharacterBase):
     user_id: UUID
 
 
 @dataclass
-class UpdateCharacter(Message):
-    character: "Character"
-    new_values: UpdateCharacterSchema
+class CreateNpc(CreateCharacterBase):
+    dm_id: UUID
 
 
 @dataclass
@@ -35,27 +38,46 @@ class CharacterCreated(Message):
 
 
 @dataclass
-class CharacterUpdated(Message):
-    character: "Character"
-    updated_fields: dict[str, Any]
-
-
-@dataclass
-class DeleteCharacter(Message):
-    character: "Character"
-
-
-@dataclass
-class CharacterDeleted(Message):
-    character: "Character"
-
-
-@dataclass
 class CreateUser(Message):
-    username: str
+    email: str
     password: str
 
 
 @dataclass
 class UserCreated(Message):
     user: User
+
+
+@dataclass
+class PromoteToDm(Message):
+    user_id: UUID
+
+
+@dataclass
+class UserPromotedToDm(Message):
+    user: User
+
+
+@dataclass
+class CreateCampaign(Message):
+    name: str
+    dm_id: UUID
+    level: int
+    description: str | None = None
+
+
+@dataclass
+class CampaignCreated(Message):
+    campaign: "Campaign"
+
+
+@dataclass
+class JoinCampaign(Message):
+    invite_code: str
+    character_id: UUID
+
+
+@dataclass
+class CampaignCharacterAdded(Message):
+    campaign: "Campaign"
+    character: "Character"

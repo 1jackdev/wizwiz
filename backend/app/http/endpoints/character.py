@@ -1,16 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, HTTPException, Response
 
 from app.containers import container
 from app.domain.abstractions import CharacterRepo
 from app.domain.errors import NoUpdatesError
-from app.domain.messages import (
-    CreateCharacter,
-    DeleteCharacter,
-    UpdateCharacter,
-)
-from app.domain.models.character import Character
+from app.domain.messages import CreateCharacter
 from app.http.schemas.character import (
     CharacterDetailSchema,
     CharacterSummarySchema,
@@ -21,7 +16,7 @@ from app.http.schemas.character import (
 router = APIRouter(prefix="/character")
 
 
-@router.get("/user/{user_id}", response_model=list[CharacterSummarySchema])
+@router.get("/user/{user_id}")
 async def list_user_characters(user_id: UUID) -> list[CharacterSummarySchema]:
     character_repo: CharacterRepo = container.db().character_repo()
     characters = character_repo.get_by_user_id(user_id)
@@ -38,21 +33,28 @@ async def list_user_characters(user_id: UUID) -> list[CharacterSummarySchema]:
     ]
 
 
-@router.get("/search", response_model=None)
-async def search_by_character_name(name: str) -> Response | Character:
+@router.get("/search")
+async def search_by_character_name(name: str) -> CharacterSummarySchema:
     character_repo = container.db().character_repo()
     character = character_repo.get_by_name(name)
     if not character:
-        return Response(status_code=404)
-    return character
+        raise HTTPException(status_code=404)
+    return CharacterSummarySchema(
+        id=character.id,
+        name=character.name,
+        character_class=character.character_class,
+        species=character.species,
+        level=character.level,
+        experience_points=character.experience_points,
+    )
 
 
-@router.get("/{character_id}/details", response_model=CharacterDetailSchema)
-async def get_character(character_id: UUID) -> Response | CharacterDetailSchema:
+@router.get("/{character_id}/details")
+async def get_character(character_id: UUID) -> CharacterDetailSchema:
     character_repo: CharacterRepo = container.db().character_repo()
     character = character_repo.get_by_id(character_id)
     if not character:
-        return Response(status_code=404)
+        raise HTTPException(status_code=404)
     pb = character.proficiency_bonus
     ability_modifier_map = {a.name: a.modifier for a in character.abilities}
     proficiency_bonus_multiplier = {
@@ -84,36 +86,39 @@ async def get_character(character_id: UUID) -> Response | CharacterDetailSchema:
     )
 
 
-@router.put("/{character_id}/update", response_model=None)
+@router.put("/{character_id}/update")
 async def update_character(
     character_id: UUID, schema: UpdateCharacterSchema
-) -> Response | Character:
-    bus = container.msg_bus()
+) -> Response:
     character_repo: CharacterRepo = container.db().character_repo()
     character = character_repo.get_by_id(character_id)
     if not character:
-        return Response(status_code=404)
+        raise HTTPException(status_code=404)
     try:
-        msg = UpdateCharacter(
-            character=character,
-            new_values=schema,
+        character.update_details(
+            name=schema.name,
+            character_class=schema.character_class,
+            species=schema.species,
+            level=schema.level,
+            experience_points=schema.experience_points,
+            description=schema.description,
+            abilities=schema.abilities,
+            skills=schema.skills,
         )
-        bus.handle_msg(msg)
     except NoUpdatesError:
         return Response(status_code=204)
+    character_repo.update_character(character=character)
     container.db.scoped_session().commit()
     return Response(status_code=201)
 
 
 @router.delete("/{character_id}/delete")
 async def delete_character(character_id: UUID) -> Response:
-    bus = container.msg_bus()
     character_repo: CharacterRepo = container.db().character_repo()
     character = character_repo.get_by_id(character_id)
     if not character:
-        return Response(status_code=404)
-    msg = DeleteCharacter(character=character)
-    bus.handle_msg(msg)
+        raise HTTPException(status_code=404)
+    character_repo.delete_character(character_id=character.id)
     container.db.scoped_session().commit()
     return Response(status_code=204)
 

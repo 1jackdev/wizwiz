@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Alert,
   StyleSheet,
   Switch,
   Text,
@@ -7,19 +8,20 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useAuth } from '../../context/AuthContext';
+import { colors } from '../../theme';
 
 const FAB_KEY = '@wizwiz_dice_fab_visible';
 
 export default function AccountScreen() {
-  const { logout } = useAuth();
+  const { logout, isDm, viewMode, setViewMode, promoteToDm } = useAuth();
   const [diceButtonVisible, setDiceButtonVisible] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(FAB_KEY).then(val => {
-      if (val !== null) {
-        setDiceButtonVisible(val === 'true');
-      }
+    AsyncStorage.getItem(FAB_KEY).then((val) => {
+      if (val !== null) setDiceButtonVisible(val === 'true');
     });
   }, []);
 
@@ -28,11 +30,26 @@ export default function AccountScreen() {
     AsyncStorage.setItem(FAB_KEY, value ? 'true' : 'false');
   };
 
+  async function handlePromote() {
+    setBusy(true);
+    try {
+      await promoteToDm();
+      await setViewMode('dm');
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Failed to enable DM');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleViewToggle(toDm: boolean) {
+    await setViewMode(toDm ? 'dm' : 'player');
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Account</Text>
 
-      {/* Settings section */}
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>Settings</Text>
         <View style={styles.settingRow}>
@@ -47,7 +64,35 @@ export default function AccountScreen() {
         </View>
       </View>
 
-      {/* Sign Out */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>Dungeon Master</Text>
+        {isDm ? (
+          <View style={styles.settingRow}>
+            <Text style={styles.settingLabel}>DM View</Text>
+            <Switch
+              value={viewMode === 'dm'}
+              onValueChange={handleViewToggle}
+              trackColor={{ false: '#374151', true: '#818cf8' }}
+              thumbColor={viewMode === 'dm' ? '#6366f1' : '#9CA3AF'}
+              ios_backgroundColor="#374151"
+            />
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handlePromote}
+            disabled={busy}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>
+              {busy ? 'Enabling…' : 'Create DM Profile'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.spacer} />
+
       <TouchableOpacity style={styles.button} onPress={logout} activeOpacity={0.8}>
         <Text style={styles.buttonText}>Sign Out</Text>
       </TouchableOpacity>
@@ -61,7 +106,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f1117',
     paddingHorizontal: 20,
     paddingTop: 24,
+    paddingBottom: 24,
   },
+  spacer: { flex: 1 },
   screenTitle: {
     fontSize: 28,
     fontWeight: '700',
@@ -93,19 +140,21 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#374151',
   },
-  settingLabel: {
-    color: '#E5E7EB',
-    fontSize: 16,
+  settingLabel: { color: '#E5E7EB', fontSize: 16 },
+  primaryButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    borderRadius: 8,
+    alignItems: 'center',
   },
+  primaryButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   button: {
     backgroundColor: '#DC2626',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

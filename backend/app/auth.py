@@ -15,10 +15,10 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
-def create_access_token(user_id: UUID, username: str) -> str:
+def create_access_token(user_id: UUID, email: str) -> str:
     payload = {
         "sub": str(user_id),
-        "username": username,
+        "email": email,
         "exp": datetime.now(timezone.utc)
         + timedelta(minutes=settings.JWT_EXPIRE_MINUTES),
     }

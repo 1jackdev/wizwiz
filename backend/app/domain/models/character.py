@@ -19,8 +19,6 @@ from app.domain.errors import (
 )
 from app.domain.messages import (
     CharacterCreated,
-    CharacterDeleted,
-    CharacterUpdated,
     Message,
 )
 from app.domain.models.defaults import (
@@ -51,6 +49,7 @@ class Character:
         level: int = 1,
         experience_points: int = 0,
         description: CharacterDescription | None = None,
+        is_npc: bool = False,
     ) -> None:
         self.id = id
         self.name = name
@@ -62,16 +61,18 @@ class Character:
         self.description = description
         self.abilities = abilities
         self.skills = skills
+        self.is_npc = is_npc
         self.update_logs: list[CharacterUpdateLog] = []
         self.events: list[Message] = []
 
     @classmethod
-    def create_character(
+    def create(
         cls,
         name: str,
         character_class: CharacterClass,
         species: CharacterSpecies,
         user: User,
+        is_npc: bool = False,
     ) -> list[Message]:
         abilities = cls._build_default_abilities(character_class, species)
         skills = cls._build_default_skills(abilities)
@@ -83,6 +84,7 @@ class Character:
             user=user,
             abilities=abilities,
             skills=skills,
+            is_npc=is_npc,
         )
         new_char.register_created_event()
         return new_char.events
@@ -97,9 +99,11 @@ class Character:
         scores = dict(zip(priority, STANDARD_ARRAY))
         abilities = []
         for ability_name in AbilityName:
-            score = min(scores[ability_name] + bonuses.get(ability_name, 0), 20)
+            score = min(scores[ability_name]
+                        + bonuses.get(ability_name, 0), 20)
             modifier = (score - 10) // 2
-            abilities.append(Ability(name=ability_name, score=score, modifier=modifier))
+            abilities.append(
+                Ability(name=ability_name, score=score, modifier=modifier))
         return abilities
 
     @staticmethod
@@ -125,62 +129,61 @@ class Character:
         description: CharacterDescription | None,
         abilities: list[Ability] | None,
         skills: list[Skill] | None,
-    ) -> list[Message]:
-        changes: dict[str, Any] = {}
+    ) -> None:
+        changed = False
 
         if name and name != self.name:
             if len(name.strip()) < 2:
                 raise NameIsTooShortError(f"Name {name} is too short")
-            changes["name"] = name
             self.name = name
+            changed = True
 
         if character_class and character_class != self.character_class:
             try:
                 new_class = CharacterClass(character_class)
             except ValueError:
-                raise InvalidClassError(f"{character_class} is not a supported class.")
-            changes["character_class"] = new_class
+                raise InvalidClassError(
+                    f"{character_class} is not a supported class.")
             self.character_class = new_class
+            changed = True
 
         if species and species != self.species:
             try:
                 new_species = CharacterSpecies(species)
             except ValueError:
-                raise InvalidSpeciesError(f"{species} is not a supported species.")
-            changes["species"] = new_species
+                raise InvalidSpeciesError(
+                    f"{species} is not a supported species.")
             self.species = new_species
+            changed = True
 
         if level and level != self.level:
             if not (1 <= level <= 20):
                 raise InvalidLevelError(f"{level} is not allowed.")
-            changes["level"] = level
             self.level = level
+            changed = True
 
         if experience_points and experience_points != self.experience_points:
             if not (0 <= experience_points <= 355_000):
                 raise InvalidXPValueError(
                     f"{experience_points} is not a valid amount of experience points."
                 )
-            changes["experience_points"] = experience_points
             self.experience_points = experience_points
+            changed = True
 
         if description and description != self.description:
-            changes["description"] = description
             self.description = description
+            changed = True
 
         if abilities and abilities != self.abilities:
-            changes["abilities"] = abilities
             self.abilities = abilities
+            changed = True
 
         if skills and skills != self.skills:
-            changes["skills"] = skills
             self.skills = skills
+            changed = True
 
-        if not changes:
+        if not changed:
             raise NoUpdatesError()
-
-        self.register_updated_event(updated_fields=changes)
-        return self.events
 
     @property
     def proficiency_bonus(self) -> int:
@@ -197,18 +200,6 @@ class Character:
             for ability in AbilityName
         ]
 
-    def delete(self) -> list[Message]:
-        self.register_deleted_event()
-        return self.events
-
     def register_created_event(self) -> None:
         created_event = CharacterCreated(character=self)
         self.events.append(created_event)
-
-    def register_updated_event(self, updated_fields: dict[str, Any]) -> None:
-        updated_event = CharacterUpdated(character=self, updated_fields=updated_fields)
-        self.events.append(updated_event)
-
-    def register_deleted_event(self) -> None:
-        deleted_event = CharacterDeleted(character=self)
-        self.events.append(deleted_event)

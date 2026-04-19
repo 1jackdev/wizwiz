@@ -5,29 +5,20 @@ import pytest
 
 from app.domain.abstractions import UserRepo
 from app.domain.entities import Ability, CharacterDescription, Skill
-from app.domain.errors import UnknownUserError
-from app.domain.handlers.command import (
-    CreateCharacterHandler,
-    UpdateCharacterHandler,
-)
-from app.domain.messages import (
-    CharacterCreated,
-    CharacterUpdated,
-    CreateCharacter,
-    UpdateCharacter,
-)
+from app.domain.errors import NoUpdatesError, UnknownUserError
+from app.domain.handlers.command import CreateCharacterHandler
+from app.domain.messages import CharacterCreated, CreateCharacter
 from app.domain.types import (
     AbilityName,
     CharacterClass,
     CharacterSpecies,
     SkillName,
 )
-from app.http.schemas.character import UpdateCharacterSchema
 from tests.factories.entities import CharacterFactory, UserFactory
 
 
 def test_create_character_success():
-    user = UserFactory(username="testuser")
+    user = UserFactory(email="testuser@example.com")
     msg = CreateCharacter(
         user_id=user.id, name="Hero", character_class="BARBARIAN", species="HUMAN"
     )
@@ -58,42 +49,42 @@ def test_create_character_unknown_user():
         handler(msg)
 
 
-def test_update_character_success():
+def test_character_update_details():
     character = CharacterFactory()
-    msg = UpdateCharacter(
-        character=character,
-        new_values=UpdateCharacterSchema(
-            name="Updated Hero",
-            character_class=CharacterClass.WIZARD,
-            species=CharacterSpecies.HIGH_ELF,
-            level=10,
-            experience_points=1000,
-            description=CharacterDescription(general_appearance="A good-looking dude"),
-            abilities=[Ability(name=AbilityName.STRENGTH, score=15, modifier=2)],
-            skills=[
-                Skill(
-                    name=SkillName.ATHLETICS,
-                    ability=AbilityName.STRENGTH,
-                    is_core=True,
-                )
-            ],
-        ),
+    character.update_details(
+        name="Updated Hero",
+        character_class=CharacterClass.WIZARD,
+        species=CharacterSpecies.HIGH_ELF,
+        level=10,
+        experience_points=1000,
+        description=CharacterDescription(general_appearance="A good-looking dude"),
+        abilities=[Ability(name=AbilityName.STRENGTH, score=15, modifier=2)],
+        skills=[
+            Skill(
+                name=SkillName.ATHLETICS,
+                ability=AbilityName.STRENGTH,
+                is_core=True,
+            )
+        ],
     )
+    assert character.name == "Updated Hero"
+    assert character.character_class == CharacterClass.WIZARD
+    assert character.species == CharacterSpecies.HIGH_ELF
+    assert character.level == 10
+    assert character.experience_points == 1000
+    assert character.description.general_appearance == "A good-looking dude"
 
-    handler = UpdateCharacterHandler()
 
-    events = handler(msg)
-    assert len(events) == 1
-    updated_event = events[0]
-
-    assert isinstance(updated_event, CharacterUpdated)
-    assert updated_event.character.name == "Updated Hero"
-    assert updated_event.character.character_class == CharacterClass.WIZARD
-    assert updated_event.character.species == CharacterSpecies.HIGH_ELF
-    assert updated_event.character.level == 10
-    assert updated_event.character.experience_points == 1000
-    assert updated_event.character.description.general_appearance == "A good-looking dude"
-    assert len(updated_event.character.abilities) == 1
-    assert updated_event.character.abilities[0].name == AbilityName.STRENGTH
-    assert len(updated_event.character.skills) == 1
-    assert updated_event.character.skills[0].name == SkillName.ATHLETICS
+def test_character_update_no_changes():
+    character = CharacterFactory()
+    with pytest.raises(NoUpdatesError):
+        character.update_details(
+            name=character.name,
+            character_class=None,
+            species=None,
+            level=None,
+            experience_points=None,
+            description=None,
+            abilities=None,
+            skills=None,
+        )

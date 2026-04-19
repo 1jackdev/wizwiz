@@ -11,6 +11,15 @@ interface DiceSelectionSheetProps {
 
 const DIE_TYPES: DieType[] = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20'];
 
+const DIE_MAX: Record<DieType, number> = {
+  d4: 4,
+  d6: 6,
+  d8: 8,
+  d10: 10,
+  d12: 12,
+  d20: 20,
+};
+
 type CountsMap = Record<DieType, number>;
 
 const initialCounts = (): CountsMap => ({
@@ -71,7 +80,7 @@ export default function DiceSelectionSheet({ visible, onRoll, onClose }: DiceSel
       const DieComponent = getDieComponent(dieType);
       return (
         <View style={styles.row}>
-          <DieComponent size={44} />
+          <DieComponent size={44} value={DIE_MAX[dieType]} />
           <Text style={styles.dieLabel}>{dieType.toUpperCase()}</Text>
           <View style={styles.spacer} />
           <TouchableOpacity

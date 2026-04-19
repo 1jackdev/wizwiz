@@ -11,6 +11,7 @@ import {
 
 import { CharacterSummary, listCharacters } from '../../api/character';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrentCharacter } from '../../context/CurrentCharacterContext';
 import { CharacterStackParamList } from '../../navigation/CharactersNavigator';
 import { colors } from '../../theme';
 import { CharacterClass, Species } from '../../types';
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<CharacterStackParamList, 'CharacterList'>;
 
 export default function CharacterListScreen({ navigation }: Props) {
   const { userId } = useAuth();
+  const { currentCharacterId, setCurrentCharacter } = useCurrentCharacter();
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -69,24 +71,51 @@ export default function CharacterListScreen({ navigation }: Props) {
         </View>
       ) : (
         <>
+          <TouchableOpacity
+            style={styles.joinButton}
+            onPress={() => navigation.navigate('JoinCampaign')}
+          >
+            <Text style={styles.joinButtonText}>Join Campaign with Code</Text>
+          </TouchableOpacity>
           <FlatList
             data={characters}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() =>
-                  navigation.navigate('CharacterDetail', { characterId: item.id, name: item.name })
-                }
-              >
-                <Text style={styles.cardName}>{item.name}</Text>
-                <Text style={styles.cardSub}>
-                  {CharacterClass[item.character_class as keyof typeof CharacterClass]} ·{' '}
-                  {Species[item.species as keyof typeof Species]} · Level {item.level}
-                </Text>
-              </TouchableOpacity>
-            )}
+            renderItem={({ item }) => {
+              const isCurrent = item.id === currentCharacterId;
+              return (
+                <TouchableOpacity
+                  style={[styles.card, isCurrent && styles.cardCurrent]}
+                  onPress={() =>
+                    navigation.navigate('CharacterDetail', {
+                      characterId: item.id,
+                      name: item.name,
+                    })
+                  }
+                >
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardName}>{item.name}</Text>
+                    {isCurrent ? (
+                      <View style={styles.currentBadge}>
+                        <Text style={styles.currentBadgeText}>CURRENT</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.setCurrentButton}
+                        onPress={() => setCurrentCharacter(item.id, item.name)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.setCurrentText}>Set Current</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={styles.cardSub}>
+                    {CharacterClass[item.character_class as keyof typeof CharacterClass]} ·{' '}
+                    {Species[item.species as keyof typeof Species]} · Level {item.level}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
           />
           <TouchableOpacity
             style={styles.fab}
@@ -112,8 +141,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  cardName: { fontSize: 18, fontWeight: '600', marginBottom: 4, color: colors.text },
+  cardCurrent: {
+    borderColor: colors.accent,
+    borderWidth: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  cardName: { fontSize: 18, fontWeight: '600', color: colors.text, flexShrink: 1, marginRight: 8 },
   cardSub: { fontSize: 14, color: colors.textSecondary },
+  currentBadge: {
+    backgroundColor: colors.accent,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  currentBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  setCurrentButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  setCurrentText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   button: {
     backgroundColor: colors.accent,
     borderRadius: 8,
@@ -140,4 +203,15 @@ const styles = StyleSheet.create({
   },
   fabText: { color: '#fff', fontSize: 28, lineHeight: 32 },
   error: { color: colors.error, textAlign: 'center', margin: 16 },
+  joinButton: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    alignItems: 'center',
+  },
+  joinButtonText: { color: colors.text, fontSize: 14, fontWeight: '600' },
 });

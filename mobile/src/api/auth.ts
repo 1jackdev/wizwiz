@@ -5,10 +5,10 @@ export interface TokenResponse {
   token_type: string;
 }
 
-export function login(username: string, password: string): Promise<TokenResponse> {
-  return api.post<TokenResponse>('/auth/login', { username, password });
+export function login(email: string, password: string): Promise<TokenResponse> {
+  return api.post<TokenResponse>('/auth/login', { email, password });
 }
 
-export function register(username: string, password: string): Promise<void> {
-  return api.post<void>('/user/create', { username, password });
+export function register(email: string, password: string): Promise<void> {
+  return api.post<void>('/user/create', { email, password });
 }

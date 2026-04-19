@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 
 from app.domain.entities import User
+from app.domain.models.campaign import Campaign
 from app.domain.models.character import Character
 
 
@@ -23,6 +24,14 @@ class CharacterRepo(ABC):
         pass
 
     @abstractmethod
+    def get_player_characters_by_user_id(self, user_id: UUID) -> list[Character]:
+        pass
+
+    @abstractmethod
+    def get_npcs_by_dm_id(self, dm_id: UUID) -> list[Character]:
+        pass
+
+    @abstractmethod
     def update_character(self, character: Character) -> None:
         pass
 
@@ -41,9 +50,43 @@ class UserRepo(ABC):
         pass
 
     @abstractmethod
-    def get_by_username(self, username: str) -> User | None:
+    def get_by_email(self, email: str) -> User | None:
         pass
 
     @abstractmethod
-    def search_by_username(self, username: str) -> User | None:
+    def search_by_email(self, email: str) -> User | None:
+        pass
+
+    @abstractmethod
+    def set_is_dm(self, user_id: UUID, is_dm: bool) -> None:
+        pass
+
+
+class CampaignRepo(ABC):
+    @abstractmethod
+    def create_campaign(self, campaign: Campaign) -> None:
+        pass
+
+    @abstractmethod
+    def get_by_id(self, campaign_id: UUID) -> Campaign | None:
+        pass
+
+    @abstractmethod
+    def get_by_invite_code(self, invite_code: str) -> Campaign | None:
+        pass
+
+    @abstractmethod
+    def get_by_dm_id(self, dm_id: UUID) -> list[Campaign]:
+        pass
+
+    @abstractmethod
+    def get_by_character_id(self, character_id: UUID) -> list[Campaign]:
+        pass
+
+    @abstractmethod
+    def update_campaign(self, campaign: Campaign) -> None:
+        pass
+
+    @abstractmethod
+    def delete_campaign(self, campaign_id: UUID) -> None:
         pass

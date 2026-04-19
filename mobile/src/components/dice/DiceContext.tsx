@@ -37,6 +37,8 @@ export interface RollRecord {
 
 export type RollState = 'idle' | 'ready' | 'rolling' | 'complete';
 
+export type HistoryStep = 'hidden' | 'thin' | 'peek' | 'full';
+
 interface DiceContextValue {
   isFabVisible: boolean;
   hideFab: () => void;
@@ -46,6 +48,8 @@ interface DiceContextValue {
   rollHistory: RollRecord[];
   isHistoryExpanded: boolean;
   setHistoryExpanded: (expanded: boolean) => void;
+  historyStep: HistoryStep;
+  setHistoryStep: (step: HistoryStep) => void;
   placeDice: (selections: DieSelection[]) => void;
   triggerRoll: () => void;
   addRoll: (dice: DieRollResult[]) => void;

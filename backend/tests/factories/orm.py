@@ -4,6 +4,7 @@ from factory import LazyFunction, post_generation
 from factory.alchemy import SESSION_PERSISTENCE_FLUSH, SQLAlchemyModelFactory
 
 from app.database.models import (
+    CampaignORM,
     CharacterAbilityORM,
     CharacterDescriptionORM,
     CharacterORM,
@@ -22,8 +23,9 @@ class UserAccountORMFactory(SQLAlchemyModelFactory):
         sqlalchemy_session_persistence = SESSION_PERSISTENCE_FLUSH
 
     id = LazyFunction(uuid4)
-    username = "testUser"
+    email = LazyFunction(lambda: f"test-{uuid4().hex[:8]}@example.com")
     password_hash = "$2b$12$placeholderhashfortest000000000000000000000000000000000"
+    is_dm = False
 
 
 class CharacterDescriptionORMFactory(SQLAlchemyModelFactory):
@@ -50,6 +52,7 @@ class CharacterORMFactory(SQLAlchemyModelFactory):
     species = "HUMAN"
     level = 1
     experience_points = 0
+    is_npc = False
 
     @post_generation
     def with_defaults(obj, create, extracted, **kwargs):
@@ -82,3 +85,17 @@ class CharacterORMFactory(SQLAlchemyModelFactory):
             )
 
         session.flush()
+
+
+class CampaignORMFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = CampaignORM
+        sqlalchemy_session = SessionTest
+        sqlalchemy_session_persistence = SESSION_PERSISTENCE_FLUSH
+
+    id = LazyFunction(uuid4)
+    name = "Test Campaign"
+    description = None
+    level = 1
+    invite_code = LazyFunction(lambda: uuid4().hex[:8])
+    dm_id = LazyFunction(uuid4)

@@ -17,7 +17,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
 export default function SignUpScreen({ navigation }: Props) {
   const { register } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function SignUpScreen({ navigation }: Props) {
     setError('');
     setLoading(true);
     try {
-      await register(username.trim(), password);
+      await register(email.trim(), password);
     } catch (e: any) {
       setError(e.message ?? 'Registration failed');
     } finally {
@@ -40,11 +40,13 @@ export default function SignUpScreen({ navigation }: Props) {
 
       <TextInput
         style={styles.input}
-        placeholder="Username"
+        placeholder="Email"
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
-        value={username}
-        onChangeText={setUsername}
+        keyboardType="email-address"
+        autoComplete="email"
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}

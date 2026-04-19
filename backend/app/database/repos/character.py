@@ -45,6 +45,24 @@ class CharacterDB(CharacterRepo):
         )
         return [character_from_orm(orm) for orm in orms]
 
+    def get_player_characters_by_user_id(self, user_id: UUID) -> list[Character]:
+        orms = (
+            self.db.query(CharacterORM)
+            .filter_by(user_id=user_id, is_npc=False)
+            .filter(CharacterORM.deleted_at.is_(None))
+            .all()
+        )
+        return [character_from_orm(orm) for orm in orms]
+
+    def get_npcs_by_dm_id(self, dm_id: UUID) -> list[Character]:
+        orms = (
+            self.db.query(CharacterORM)
+            .filter_by(user_id=dm_id, is_npc=True)
+            .filter(CharacterORM.deleted_at.is_(None))
+            .all()
+        )
+        return [character_from_orm(orm) for orm in orms]
+
     def update_character(self, character: Character) -> None:
         orm = self.db.get(CharacterORM, character.id)
         if orm is None:

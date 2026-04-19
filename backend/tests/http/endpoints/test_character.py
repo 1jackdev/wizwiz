@@ -38,7 +38,7 @@ def test_character_name_does_not_exist(client: TestClient):
 
 
 def test_get_character(client: TestClient, db):
-    user = UserAccountORMFactory(username="123")
+    user = UserAccountORMFactory(email="123@example.com")
     char = CharacterORMFactory(user_id=user.id, name="Legolas")
     response = client.get(f"/api/character/{char.id}/details")
     assert response.status_code == 200
@@ -49,7 +49,7 @@ def test_get_character(client: TestClient, db):
 
 
 def test_delete_character(client: TestClient, db):
-    user = UserAccountORMFactory(username="456")
+    user = UserAccountORMFactory(email="456@example.com")
     char = CharacterORMFactory(user_id=user.id, name="Gimli")
     response = client.delete(f"/api/character/{char.id}/delete")
     assert response.status_code == 204
@@ -61,7 +61,7 @@ def test_delete_character_not_found(client: TestClient):
 
 
 def test_update_character(client: TestClient, db):
-    user = UserAccountORMFactory(username="update-user")
+    user = UserAccountORMFactory(email="update-user@example.com")
     char = CharacterORMFactory(user_id=user.id, name="Aragorn")
     response = client.put(
         f"/api/character/{char.id}/update",
@@ -71,7 +71,7 @@ def test_update_character(client: TestClient, db):
 
 
 def test_update_character_no_changes(client: TestClient, db):
-    user = UserAccountORMFactory(username="no-change-user")
+    user = UserAccountORMFactory(email="no-change-user@example.com")
     char = CharacterORMFactory(user_id=user.id, name="Aragorn")
     response = client.put(
         f"/api/character/{char.id}/update",
@@ -89,7 +89,7 @@ def test_update_character_not_found(client: TestClient):
 
 
 def test_update_character_invalid_level(client: TestClient, db):
-    user = UserAccountORMFactory(username="invalid-level-user")
+    user = UserAccountORMFactory(email="invalid-level-user@example.com")
     char = CharacterORMFactory(user_id=user.id, name="Aragorn")
     response = client.put(
         f"/api/character/{char.id}/update",

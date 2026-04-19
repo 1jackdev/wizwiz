@@ -4,6 +4,7 @@ import AbilitiesScreen from '../screens/main/AbilitiesScreen';
 import CharacterDetailScreen from '../screens/main/CharacterDetailScreen';
 import CharacterListScreen from '../screens/main/CharacterListScreen';
 import CreateCharacterScreen from '../screens/main/CreateCharacterScreen';
+import JoinCampaignScreen from '../screens/main/JoinCampaignScreen';
 import SkillsScreen from '../screens/main/SkillsScreen';
 
 export type CharacterStackParamList = {
@@ -12,6 +13,7 @@ export type CharacterStackParamList = {
   CharacterDetail: { characterId: string; name: string };
   Abilities: { characterId: string };
   Skills: { characterId: string };
+  JoinCampaign: undefined;
 };
 
 const Stack = createNativeStackNavigator<CharacterStackParamList>();
@@ -43,6 +45,11 @@ export default function CharactersNavigator() {
         name="Skills"
         component={SkillsScreen}
         options={{ title: 'Skills' }}
+      />
+      <Stack.Screen
+        name="JoinCampaign"
+        component={JoinCampaignScreen}
+        options={{ title: 'Join Campaign' }}
       />
     </Stack.Navigator>
   );

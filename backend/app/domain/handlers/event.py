@@ -1,10 +1,10 @@
-from app.database.repos.character import CharacterRepo
-from app.domain.abstractions import UserRepo
+from app.domain.abstractions import CampaignRepo, CharacterRepo, UserRepo
 from app.domain.messages import (
+    CampaignCharacterAdded,
+    CampaignCreated,
     CharacterCreated,
-    CharacterDeleted,
-    CharacterUpdated,
     UserCreated,
+    UserPromotedToDm,
 )
 
 
@@ -16,25 +16,33 @@ class CreateCharacter:
         self.repo.create_character(character=msg.character)
 
 
-class UpdateCharacter:
-    def __init__(self, repo: CharacterRepo) -> None:
-        self.repo = repo
-
-    def __call__(self, msg: CharacterUpdated) -> None:
-        self.repo.update_character(character=msg.character)
-
-
-class DeleteCharacter:
-    def __init__(self, repo: CharacterRepo) -> None:
-        self.repo = repo
-
-    def __call__(self, msg: CharacterDeleted) -> None:
-        self.repo.delete_character(character_id=msg.character.id)
-
-
 class CreateUser:
     def __init__(self, repo: UserRepo) -> None:
         self.repo = repo
 
     def __call__(self, msg: UserCreated) -> None:
         self.repo.create_user(user=msg.user)
+
+
+class PromoteUserToDm:
+    def __init__(self, repo: UserRepo) -> None:
+        self.repo = repo
+
+    def __call__(self, msg: UserPromotedToDm) -> None:
+        self.repo.set_is_dm(user_id=msg.user.id, is_dm=True)
+
+
+class CreateCampaign:
+    def __init__(self, repo: CampaignRepo) -> None:
+        self.repo = repo
+
+    def __call__(self, msg: CampaignCreated) -> None:
+        self.repo.create_campaign(campaign=msg.campaign)
+
+
+class PersistCampaignCharacterAdded:
+    def __init__(self, repo: CampaignRepo) -> None:
+        self.repo = repo
+
+    def __call__(self, msg: CampaignCharacterAdded) -> None:
+        self.repo.update_campaign(campaign=msg.campaign)

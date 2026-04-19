@@ -1,12 +1,14 @@
 from uuid import UUID, uuid4
 
 from app.database.models import (
+    CampaignORM,
     CharacterAbilityORM,
     CharacterORM,
     CharacterSkillORM,
     UserAccountORM,
 )
 from app.domain.entities import Ability, CharacterDescription, Skill, User
+from app.domain.models.campaign import Campaign
 from app.domain.models.character import Character
 from app.domain.types import (
     AbilityName,
@@ -20,16 +22,18 @@ from app.domain.types import (
 def user_to_orm(user: User) -> UserAccountORM:
     return UserAccountORM(
         id=user.id,
-        username=user.username,
+        email=user.email,
         password_hash=user.password_hash,
+        is_dm=user.is_dm,
     )
 
 
 def user_from_orm(orm: UserAccountORM) -> User:
     return User(
         id=orm.id,
-        username=orm.username,
+        email=orm.email,
         password_hash=orm.password_hash,
+        is_dm=orm.is_dm,
     )
 
 
@@ -63,6 +67,7 @@ def character_to_orm(character: Character) -> CharacterORM:
         species=character.species,
         level=character.level,
         experience_points=character.experience_points,
+        is_npc=character.is_npc,
         abilities=[ability_to_orm(a, character.id) for a in character.abilities],
         skills=[skill_to_orm(s, character.id) for s in character.skills],
     )
@@ -77,6 +82,7 @@ def character_from_orm(orm: CharacterORM) -> Character:
         species=CharacterSpecies(orm.species),
         level=orm.level,
         experience_points=orm.experience_points,
+        is_npc=orm.is_npc,
         description=character_description_from_orm(orm) if orm.description else None,
         abilities=[ability_from_orm(a) for a in orm.abilities],
         skills=[skill_from_orm(s) for s in orm.skills],
@@ -97,6 +103,29 @@ def skill_from_orm(orm: CharacterSkillORM) -> Skill:
         ability=AbilityName(orm.ability_name),
         proficiency=ProficiencyLevel.from_int(orm.proficiency_level),
         passive_score=orm.passive_score,
+    )
+
+
+def campaign_to_orm(campaign: Campaign) -> CampaignORM:
+    return CampaignORM(
+        id=campaign.id,
+        name=campaign.name,
+        description=campaign.description,
+        level=campaign.level,
+        invite_code=campaign.invite_code,
+        dm_id=campaign.dm.id,
+    )
+
+
+def campaign_from_orm(orm: CampaignORM) -> Campaign:
+    return Campaign(
+        id=orm.id,
+        name=orm.name,
+        description=orm.description,
+        level=orm.level,
+        invite_code=orm.invite_code,
+        dm=user_from_orm(orm.dm),
+        characters=[character_from_orm(c) for c in orm.characters],
     )
 
 

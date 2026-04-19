@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session as sa_scoped_session
 from sqlalchemy.orm import sessionmaker
 
 from app.database.db import session_id
+from app.database.repos.campaign import CampaignDB
 from app.database.repos.character import CharacterDB
 from app.database.repos.user import UserDB
 from app.domain.bus import MessageBus
@@ -38,6 +39,7 @@ class DBContainer(DeclarativeContainer):
 
     character_repo = Factory(CharacterDB, db=scoped_session)
     user_repo = Factory(UserDB, db=scoped_session)
+    campaign_repo = Factory(CampaignDB, db=scoped_session)
 
 
 class AppContainer(DeclarativeContainer):
@@ -45,13 +47,20 @@ class AppContainer(DeclarativeContainer):
 
     handler_providers = [
         Factory(command.CreateCharacterHandler, user_repo=db.user_repo),
-        Factory(command.UpdateCharacterHandler),
-        Factory(command.DeleteCharacterHandler),
         Factory(event.CreateCharacter, repo=db.character_repo),
-        Factory(event.UpdateCharacter, repo=db.character_repo),
-        Factory(event.DeleteCharacter, repo=db.character_repo),
         Factory(command.CreateUserHandler, repo=db.user_repo),
         Factory(event.CreateUser, repo=db.user_repo),
+        Factory(command.PromoteToDmHandler, repo=db.user_repo),
+        Factory(event.PromoteUserToDm, repo=db.user_repo),
+        Factory(command.CreateNpcHandler, user_repo=db.user_repo),
+        Factory(command.CreateCampaignHandler, user_repo=db.user_repo),
+        Factory(
+            command.JoinCampaignHandler,
+            campaign_repo=db.campaign_repo,
+            character_repo=db.character_repo,
+        ),
+        Factory(event.CreateCampaign, repo=db.campaign_repo),
+        Factory(event.PersistCampaignCharacterAdded, repo=db.campaign_repo),
     ]
 
     msg_bus = Factory(MessageBus, handler_providers=handler_providers)
