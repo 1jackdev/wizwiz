@@ -1,7 +1,9 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.domain.entities import ActionType
 from app.http.schemas.character import CharacterSummarySchema
 
 
@@ -33,3 +35,29 @@ class CampaignSummarySchema(BaseModel):
 
 class CampaignDetailSchema(CampaignSummarySchema):
     characters: list[CharacterSummarySchema]
+
+
+class LogCampaignActionSchema(BaseModel):
+    character_id: UUID
+    action_type: ActionType
+    action_name: str | None = None
+    in_combat: bool = False
+    round_number: int | None = None
+
+
+class CampaignActionSchema(BaseModel):
+    id: UUID
+    campaign_id: UUID
+    character_id: UUID
+    action_type: ActionType
+    action_name: str | None
+    in_combat: bool
+    round_number: int | None
+    created_at: datetime | None
+
+
+class CampaignActionPageSchema(BaseModel):
+    items: list[CampaignActionSchema]
+    page: int
+    page_size: int
+    total: int

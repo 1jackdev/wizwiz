@@ -173,4 +173,23 @@ export const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   cancelText: { fontSize: 16, color: colors.textMuted },
+  setCurrentButton: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    alignItems: 'center',
+  },
+  setCurrentButtonActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent + '22',
+  },
+  setCurrentButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
 });

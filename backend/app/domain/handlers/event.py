@@ -1,5 +1,11 @@
-from app.domain.abstractions import CampaignRepo, CharacterRepo, UserRepo
+from app.domain.abstractions import (
+    CampaignActionRepo,
+    CampaignRepo,
+    CharacterRepo,
+    UserRepo,
+)
 from app.domain.messages import (
+    CampaignActionLogged,
     CampaignCharacterAdded,
     CampaignCreated,
     CharacterCreated,
@@ -46,3 +52,11 @@ class PersistCampaignCharacterAdded:
 
     def __call__(self, msg: CampaignCharacterAdded) -> None:
         self.repo.update_campaign(campaign=msg.campaign)
+
+
+class PersistCampaignAction:
+    def __init__(self, repo: CampaignActionRepo) -> None:
+        self.repo = repo
+
+    def __call__(self, msg: CampaignActionLogged) -> None:
+        self.repo.add(action=msg.action)

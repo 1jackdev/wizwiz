@@ -2,20 +2,24 @@ from uuid import uuid4
 
 from app.auth import hash_password
 from app.domain.abstractions import CampaignRepo, CharacterRepo, UserRepo
-from app.domain.entities import User
+from app.domain.entities import CampaignAction, User
 from app.domain.errors import (
+    CharacterNotInCampaignError,
     EmailAlreadyExistsError,
     InvalidInviteCodeError,
+    UnknownCampaignError,
     UnknownCharacterError,
     UnknownUserError,
     UserIsNotDmError,
 )
 from app.domain.messages import (
+    CampaignActionLogged,
     CreateCampaign,
     CreateCharacter,
     CreateNpc,
     CreateUser,
     JoinCampaign,
+    LogCampaignAction,
     Message,
     PromoteToDm,
     UserCreated,
@@ -120,3 +124,35 @@ class JoinCampaignHandler:
         if not character:
             raise UnknownCharacterError("Character does not exist.")
         return campaign.add_character(character)
+
+
+class LogCampaignActionHandler:
+    def __init__(
+        self, campaign_repo: CampaignRepo, character_repo: CharacterRepo
+    ) -> None:
+        self.campaign_repo = campaign_repo
+        self.character_repo = character_repo
+
+    def __call__(self, msg: LogCampaignAction) -> list[Message]:
+        campaign = self.campaign_repo.get_by_id(msg.campaign_id)
+        if not campaign:
+            raise UnknownCampaignError("Campaign does not exist.")
+        character = self.character_repo.get_by_id(msg.character_id)
+        if not character:
+            raise UnknownCharacterError("Character does not exist.")
+        is_dm = campaign.dm.id == character.user.id and character.is_npc
+        in_campaign = any(c.id == character.id for c in campaign.characters)
+        if not (in_campaign or is_dm):
+            raise CharacterNotInCampaignError(
+                "Character is not in this campaign."
+            )
+        action = CampaignAction(
+            id=uuid4(),
+            campaign_id=msg.campaign_id,
+            character_id=msg.character_id,
+            action_type=msg.action_type,
+            action_name=msg.action_name,
+            in_combat=msg.in_combat,
+            round_number=msg.round_number,
+        )
+        return [CampaignActionLogged(action=action)]

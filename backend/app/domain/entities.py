@@ -1,9 +1,28 @@
+from datetime import datetime
+from enum import Enum
 from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.domain.types import AbilityName, ProficiencyLevel, SkillName
+
+
+class ActionType(str, Enum):
+    ACTION = "action"
+    BONUS = "bonus"
+    REACTION = "reaction"
+
+
+class CampaignAction(BaseModel):
+    id: UUID
+    campaign_id: UUID
+    character_id: UUID
+    action_type: ActionType
+    action_name: str | None = None
+    in_combat: bool
+    round_number: int | None = None
+    created_at: datetime | None = None
 
 
 class Ability(BaseModel):

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from app.domain.entities import User
+from app.domain.entities import ActionType, CampaignAction, User
 from app.domain.types import CharacterClass, CharacterSpecies
 
 if TYPE_CHECKING:
@@ -81,3 +81,18 @@ class JoinCampaign(Message):
 class CampaignCharacterAdded(Message):
     campaign: "Campaign"
     character: "Character"
+
+
+@dataclass
+class LogCampaignAction(Message):
+    campaign_id: UUID
+    character_id: UUID
+    action_type: ActionType
+    action_name: str | None
+    in_combat: bool
+    round_number: int | None
+
+
+@dataclass
+class CampaignActionLogged(Message):
+    action: CampaignAction

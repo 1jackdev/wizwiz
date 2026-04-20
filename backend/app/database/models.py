@@ -4,9 +4,11 @@ from uuid import UUID
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Table,
     UniqueConstraint,
@@ -170,6 +172,26 @@ class CampaignORM(Base, BaseMixin):
     characters: Mapped[list["CharacterORM"]] = relationship(
         secondary=campaign_character_table,
     )
+
+
+class CampaignActionORM(Base, BaseMixin):
+    __tablename__ = "campaign_action"
+
+    id: Mapped[PK]
+    campaign_id: Mapped[UUID] = mapped_column(
+        ForeignKey("campaign.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    character_id: Mapped[UUID] = mapped_column(
+        ForeignKey("character.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    action_type: Mapped[str] = mapped_column(String, nullable=False)
+    action_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    in_combat: Mapped[bool] = mapped_column(Boolean, nullable=False, index=True)
+    round_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class CharacterSkillORM(Base, BaseMixin):

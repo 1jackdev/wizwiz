@@ -1,4 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Clipboard from 'expo-clipboard';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,6 +18,7 @@ import {
   regenerateInvite,
   removeCharacterFromCampaign,
 } from '../../api/campaign';
+import CampaignActionHistory from '../../components/CampaignActionHistory';
 import { CampaignStackParamList } from '../../navigation/CampaignsNavigator';
 import { colors } from '../../theme';
 import { CharacterClass, Species } from '../../types';
@@ -28,6 +30,8 @@ export default function CampaignDetailScreen({ navigation, route }: Props) {
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [historyVisible, setHistoryVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +53,17 @@ export default function CampaignDetailScreen({ navigation, route }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function handleCopy() {
+    if (!campaign) return;
+    try {
+      await Clipboard.setStringAsync(campaign.invite_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Failed to copy');
+    }
+  }
 
   async function handleRegen() {
     try {
@@ -128,10 +143,27 @@ export default function CampaignDetailScreen({ navigation, route }: Props) {
         <Text style={styles.sectionHeader}>Invite Code</Text>
         <View style={styles.inviteRow}>
           <Text style={styles.inviteCode}>{campaign.invite_code}</Text>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleRegen}>
-            <Text style={styles.secondaryButtonText}>Regenerate</Text>
-          </TouchableOpacity>
+          <View style={styles.inviteButtons}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleCopy}>
+              <Text style={styles.secondaryButtonText}>
+                {copied ? 'Copied!' : 'Copy'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleRegen}>
+              <Text style={styles.secondaryButtonText}>Regenerate</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>Action History</Text>
+        <TouchableOpacity
+          style={styles.historyButton}
+          onPress={() => setHistoryVisible(true)}
+        >
+          <Text style={styles.historyButtonText}>View Action History</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -169,6 +201,15 @@ export default function CampaignDetailScreen({ navigation, route }: Props) {
       <TouchableOpacity style={styles.dangerButton} onPress={confirmDelete}>
         <Text style={styles.dangerButtonText}>Delete Campaign</Text>
       </TouchableOpacity>
+
+      <CampaignActionHistory
+        visible={historyVisible}
+        onClose={() => setHistoryVisible(false)}
+        campaignId={campaign.id}
+        mode="dm"
+        characters={campaign.characters.map((c) => ({ id: c.id, name: c.name }))}
+        title={`${campaign.name} · Action History`}
+      />
     </ScrollView>
   );
 }
@@ -205,7 +246,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
+  inviteButtons: { flexDirection: 'row', gap: 8 },
+  historyButton: {
+    backgroundColor: colors.bgInput,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  historyButtonText: { color: colors.text, fontSize: 14, fontWeight: '600' },
   inviteCode: {
     color: colors.text,
     fontSize: 20,

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.domain.entities import User
+from app.domain.entities import CampaignAction, User
 from app.domain.models.campaign import Campaign
 from app.domain.models.character import Character
 
@@ -89,4 +89,31 @@ class CampaignRepo(ABC):
 
     @abstractmethod
     def delete_campaign(self, campaign_id: UUID) -> None:
+        pass
+
+
+class CampaignActionRepo(ABC):
+    @abstractmethod
+    def add(self, action: CampaignAction) -> None:
+        pass
+
+    @abstractmethod
+    def list_by_campaign(
+        self,
+        campaign_id: UUID,
+        character_id: UUID | None,
+        in_combat: bool | None,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[CampaignAction], int]:
+        pass
+
+    @abstractmethod
+    def list_by_character(
+        self,
+        character_id: UUID,
+        campaign_id: UUID,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[CampaignAction], int]:
         pass
