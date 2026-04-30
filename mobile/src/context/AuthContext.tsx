@@ -8,6 +8,8 @@ import {
   promoteToDm as apiPromoteToDm,
   UserInfo,
 } from '../api/user';
+import { ThemeName, themes } from '../theme';
+import { useTheme } from './ThemeContext';
 
 export type ViewMode = 'player' | 'dm';
 
@@ -37,6 +39,7 @@ function decodeJwtPayload(token: string): { sub: string; email: string } {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { setTheme } = useTheme();
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
@@ -65,6 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const info = await getUser(payload.sub);
         setIsDm(info.is_dm);
+        if (info.theme && info.theme in themes) {
+          setTheme(info.theme as ThemeName);
+        }
       } catch {
         setIsDm(false);
       }

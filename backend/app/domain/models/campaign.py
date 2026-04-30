@@ -31,6 +31,7 @@ class Campaign:
         invite_code: str,
         description: str | None = None,
         characters: list[Character] | None = None,
+        status: str = "ACTIVE",
     ) -> None:
         self.id = id
         self.name = name
@@ -38,6 +39,7 @@ class Campaign:
         self.level = level
         self.invite_code = invite_code
         self.description = description
+        self.status = status
         self.characters: list[Character] = characters or []
         self.events: list[Message] = []
 
@@ -69,6 +71,7 @@ class Campaign:
         name: str | None,
         level: int | None,
         description: str | None,
+        status: str | None = None,
     ) -> None:
         changed = False
         if name and name != self.name:
@@ -81,6 +84,9 @@ class Campaign:
             changed = True
         if description is not None and description != self.description:
             self.description = description
+            changed = True
+        if status is not None and status != self.status:
+            self.status = status
             changed = True
         if not changed:
             raise NoUpdatesError()

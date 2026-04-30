@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 
-import { styles } from './styles';
+import { useTheme } from '../../../context/ThemeContext';
+import { createStyles } from './styles';
 
 interface InputModalProps {
   label: string;
@@ -18,6 +19,8 @@ export function InputModal({
   onConfirm,
   onClose,
 }: InputModalProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [draft, setDraft] = useState(value);
   return (
     <Modal visible transparent animationType="fade">
@@ -64,6 +67,8 @@ export function StepperModal({
   onConfirm: (v: string) => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [draft, setDraft] = useState(Number(value) || 1);
   return (
     <Modal visible transparent animationType="fade">

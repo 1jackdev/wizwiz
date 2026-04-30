@@ -8,6 +8,7 @@ export interface CampaignSummary {
   description: string | null;
   dm_id: string;
   invite_code: string;
+  status: string;
 }
 
 export interface CampaignDetail extends CampaignSummary {

@@ -31,6 +31,7 @@ def _summary(c: Campaign) -> CampaignSummarySchema:
         description=c.description,
         dm_id=c.dm.id,
         invite_code=c.invite_code,
+        status=c.status,
     )
 
 
@@ -42,6 +43,7 @@ def _detail(c: Campaign) -> CampaignDetailSchema:
         description=c.description,
         dm_id=c.dm.id,
         invite_code=c.invite_code,
+        status=c.status,
         characters=[
             CharacterSummarySchema(
                 id=ch.id,
@@ -113,6 +115,7 @@ async def update_campaign(
             name=schema.name,
             level=schema.level,
             description=schema.description,
+            status=schema.status,
         )
     except NoUpdatesError:
         return Response(status_code=204)

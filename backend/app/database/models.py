@@ -41,6 +41,7 @@ class UserAccountORM(Base, BaseMixin):
     email: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(nullable=False)
     is_dm: Mapped[bool] = mapped_column(default=False, nullable=False)
+    theme: Mapped[str] = mapped_column(String, default='dark', nullable=False, server_default='dark')
 
     characters: Mapped[list["CharacterORM"]] = relationship(
         cascade="all, delete-orphan",
@@ -162,6 +163,7 @@ class CampaignORM(Base, BaseMixin):
     invite_code: Mapped[str] = mapped_column(
         nullable=False, unique=True, index=True
     )
+    status: Mapped[str] = mapped_column(nullable=False, default="ACTIVE")
     dm_id: Mapped[UUID] = mapped_column(
         ForeignKey("user_account.id", ondelete="CASCADE"),
         nullable=False,

@@ -1,9 +1,12 @@
 import { FlatList, Modal, Pressable, Text } from 'react-native';
 import { useState } from 'react';
 
-import { styles } from './styles';
+import { useTheme } from '../../../context/ThemeContext';
+import { createStyles } from './styles';
 
 export function SectionHeader({ title }: { title: string }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return <Text style={styles.sectionHeader}>{title}</Text>;
 }
 
@@ -16,6 +19,8 @@ export function TappableField({
   value: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <Pressable
       style={({ pressed }) => [styles.field, pressed && { opacity: 0.7 }]}
@@ -23,18 +28,6 @@ export function TappableField({
     >
       <Text style={styles.fieldLabel}>{label}</Text>
       <Text style={styles.fieldInput}>{value}</Text>
-    </Pressable>
-  );
-}
-
-export function NavRow({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.field, styles.navRow, pressed && { opacity: 0.7 }]}
-      onPress={onPress}
-    >
-      <Text style={styles.navRowLabel}>{label}</Text>
-      <Text style={styles.navRowChevron}>›</Text>
     </Pressable>
   );
 }
@@ -47,6 +40,8 @@ interface SelectFieldProps {
 }
 
 export function SelectField({ label, value, options, onChange }: SelectFieldProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [visible, setVisible] = useState(false);
   return (
     <>

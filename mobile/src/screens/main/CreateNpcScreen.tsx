@@ -13,8 +13,9 @@ import {
 
 import { createNpc } from '../../api/npc';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { NpcStackParamList } from '../../navigation/NpcsNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 import { CharacterClass, Species } from '../../types';
 
 type Props = NativeStackScreenProps<NpcStackParamList, 'CreateNpc'>;
@@ -30,6 +31,8 @@ interface PickerProps {
 }
 
 function PickerField({ label, value, options, onChange }: PickerProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [visible, setVisible] = useState(false);
   return (
     <>
@@ -75,6 +78,8 @@ function PickerField({ label, value, options, onChange }: PickerProps) {
 }
 
 export default function CreateNpcScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { userId } = useAuth();
   const [name, setName] = useState('');
   const [characterClass, setCharacterClass] = useState('');
@@ -143,7 +148,7 @@ export default function CreateNpcScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: colors.bg },
   input: {
     borderWidth: 1,

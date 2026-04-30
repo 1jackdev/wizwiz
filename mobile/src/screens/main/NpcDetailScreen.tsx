@@ -15,13 +15,16 @@ import {
   getCharacter,
 } from '../../api/character';
 import { api } from '../../api/client';
+import { useTheme } from '../../context/ThemeContext';
 import { NpcStackParamList } from '../../navigation/NpcsNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 import { CharacterClass, Species } from '../../types';
 
 type Props = NativeStackScreenProps<NpcStackParamList, 'NpcDetail'>;
 
 export default function NpcDetailScreen({ navigation, route }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { characterId } = route.params;
   const [npc, setNpc] = useState<CharacterDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,7 +116,7 @@ export default function NpcDetailScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
   container: { padding: 20, gap: 16 },
   centered: {

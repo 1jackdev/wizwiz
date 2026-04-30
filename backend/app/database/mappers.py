@@ -25,6 +25,7 @@ def user_to_orm(user: User) -> UserAccountORM:
         email=user.email,
         password_hash=user.password_hash,
         is_dm=user.is_dm,
+        theme=user.theme,
     )
 
 
@@ -34,6 +35,7 @@ def user_from_orm(orm: UserAccountORM) -> User:
         email=orm.email,
         password_hash=orm.password_hash,
         is_dm=orm.is_dm,
+        theme=orm.theme,
     )
 
 
@@ -113,6 +115,7 @@ def campaign_to_orm(campaign: Campaign) -> CampaignORM:
         description=campaign.description,
         level=campaign.level,
         invite_code=campaign.invite_code,
+        status=campaign.status,
         dm_id=campaign.dm.id,
     )
 
@@ -124,6 +127,7 @@ def campaign_from_orm(orm: CampaignORM) -> Campaign:
         description=orm.description,
         level=orm.level,
         invite_code=orm.invite_code,
+        status=orm.status,
         dm=user_from_orm(orm.dm),
         characters=[character_from_orm(c) for c in orm.characters],
     )

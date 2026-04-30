@@ -17,6 +17,7 @@ class UpdateCampaignSchema(BaseModel):
     name: str | None = None
     level: int | None = None
     description: str | None = None
+    status: str | None = None
 
 
 class JoinCampaignSchema(BaseModel):
@@ -31,6 +32,7 @@ class CampaignSummarySchema(BaseModel):
     description: str | None
     dm_id: UUID
     invite_code: str
+    status: str
 
 
 class CampaignDetailSchema(CampaignSummarySchema):

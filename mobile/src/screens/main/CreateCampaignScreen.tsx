@@ -11,12 +11,15 @@ import {
 
 import { createCampaign } from '../../api/campaign';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CampaignStackParamList } from '../../navigation/CampaignsNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 
 type Props = NativeStackScreenProps<CampaignStackParamList, 'CreateCampaign'>;
 
 export default function CreateCampaignScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { userId } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -85,7 +88,7 @@ export default function CreateCampaignScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, padding: 24, backgroundColor: colors.bg },
   input: {
     borderWidth: 1,

@@ -114,7 +114,10 @@ function RollingDie({
       ]}
     >
       <Pressable onPress={onTap} style={styles.diePressable}>
-        <DieComponent value={shouldRoll && result == null ? null : result ?? DIE_MAX[die.type]} size={DIE_SIZE} />
+        <DieComponent
+          value={shouldRoll && result == null ? null : (result ?? DIE_MAX[die.type])}
+          size={DIE_SIZE}
+        />
       </Pressable>
     </Animated.View>
   );
@@ -123,13 +126,20 @@ function RollingDie({
 // ─── DiceRollingView ─────────────────────────────────────────────────────────
 
 export default function DiceRollingView() {
-  const { activeDice, rollState, triggerRoll, addRoll } = useDice();
+  const { activeDice, rollState, triggerRoll, addRoll, clearDice } = useDice();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  const [rollGen, setRollGen] = useState(0);
+  const [rollGen, _] = useState(0);
   const [displayResults, setDisplayResults] = useState<Map<string, number>>(new Map());
   const resultsRef = useRef<Map<string, number>>(new Map());
   const completedRef = useRef(0);
+
+  // Auto-clear 5s after roll completes
+  useEffect(() => {
+    if (rollState !== 'complete') return;
+    const timer = setTimeout(clearDice, 5000);
+    return () => clearTimeout(timer);
+  }, [rollState, clearDice]);
 
   useEffect(() => {
     resultsRef.current = new Map();
@@ -153,17 +163,20 @@ export default function DiceRollingView() {
 
   const lastTapRef = useRef(0);
   const handleDieTap = useCallback(() => {
-    if (rollState !== 'ready' && rollState !== 'complete') return;
+    if (rollState === 'complete') {
+      clearDice();
+      return;
+    }
+    if (rollState !== 'ready') return;
     const now = Date.now();
     const delta = now - lastTapRef.current;
     if (delta < DOUBLE_TAP_DELAY && delta > 0) {
       lastTapRef.current = 0;
-      if (rollState === 'complete') setRollGen((g) => g + 1);
       triggerRoll();
     } else {
       lastTapRef.current = now;
     }
-  }, [rollState, triggerRoll]);
+  }, [rollState, triggerRoll, clearDice]);
 
   if (activeDice.length === 0) return null;
 

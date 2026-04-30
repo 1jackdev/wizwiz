@@ -15,7 +15,8 @@ import {
   listCampaignActions,
   listCharacterCampaignActions,
 } from '../api/campaignAction';
-import { colors } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { ColorScheme } from '../theme';
 
 type CombatFilter = 'all' | 'combat' | 'outside';
 
@@ -66,6 +67,8 @@ export default function CampaignActionHistory({
   playerCharacterId,
   title,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState<CampaignAction[]>([]);
   const [page, setPage] = useState(1);
@@ -259,7 +262,7 @@ export default function CampaignActionHistory({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',

@@ -19,13 +19,16 @@ import {
   removeCharacterFromCampaign,
 } from '../../api/campaign';
 import CampaignActionHistory from '../../components/CampaignActionHistory';
+import { useTheme } from '../../context/ThemeContext';
 import { CampaignStackParamList } from '../../navigation/CampaignsNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 import { CharacterClass, Species } from '../../types';
 
 type Props = NativeStackScreenProps<CampaignStackParamList, 'CampaignDetail'>;
 
 export default function CampaignDetailScreen({ navigation, route }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { campaignId } = route.params;
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -214,7 +217,7 @@ export default function CampaignDetailScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
   container: { padding: 20, gap: 16 },
   centered: {

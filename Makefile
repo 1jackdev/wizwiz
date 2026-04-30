@@ -37,6 +37,9 @@ mobile:
 mobile-fresh:
 	cd mobile && npx expo start --clear
 
+mobile-ios:
+	cd mobile && npx expo start --clear --ios
+
 mobile-lint:
 	cd mobile && npm run lint
 

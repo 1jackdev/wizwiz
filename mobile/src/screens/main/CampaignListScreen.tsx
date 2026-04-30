@@ -11,12 +11,15 @@ import {
 
 import { CampaignSummary, listDmCampaigns } from '../../api/campaign';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CampaignStackParamList } from '../../navigation/CampaignsNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 
 type Props = NativeStackScreenProps<CampaignStackParamList, 'CampaignList'>;
 
 export default function CampaignListScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { userId } = useAuth();
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +106,7 @@ export default function CampaignListScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   centered: {
     flex: 1,

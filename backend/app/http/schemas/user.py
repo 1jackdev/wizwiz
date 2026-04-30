@@ -17,3 +17,8 @@ class UserSchema(BaseModel):
     id: UUID
     email: str
     is_dm: bool
+    theme: str = 'dark'
+
+
+class UpdateThemeSchema(BaseModel):
+    theme: str

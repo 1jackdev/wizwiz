@@ -28,11 +28,18 @@ export interface DieRollResult {
   value: number;
 }
 
+export interface RollModifier {
+  label: string;
+  value: number;
+}
+
 export interface RollRecord {
   id: string;
   dice: DieRollResult[];
   total: number;
   timestamp: number;
+  modifier?: RollModifier;
+  passive?: boolean;
 }
 
 export type RollState = 'idle' | 'ready' | 'rolling' | 'complete';
@@ -46,13 +53,14 @@ interface DiceContextValue {
   activeDice: ActiveDie[];
   rollState: RollState;
   rollHistory: RollRecord[];
-  isHistoryExpanded: boolean;
-  setHistoryExpanded: (expanded: boolean) => void;
   historyStep: HistoryStep;
   setHistoryStep: (step: HistoryStep) => void;
+  pendingModifier: RollModifier | null;
+  setPendingModifier: (m: RollModifier | null) => void;
   placeDice: (selections: DieSelection[]) => void;
   triggerRoll: () => void;
   addRoll: (dice: DieRollResult[]) => void;
+  logPassive: (label: string, score: number) => void;
   clearDice: () => void;
 }
 
@@ -67,7 +75,8 @@ export function DiceProvider({ children }: { children: React.ReactNode }) {
   const [activeDice, setActiveDice] = useState<ActiveDie[]>([]);
   const [rollState, setRollState] = useState<RollState>('idle');
   const [rollHistory, setRollHistory] = useState<RollRecord[]>([]);
-  const [isHistoryExpanded, setHistoryExpanded] = useState(false);
+  const [historyStep, setHistoryStep] = useState<HistoryStep>('thin');
+  const [pendingModifier, setPendingModifier] = useState<RollModifier | null>(null);
 
   useEffect(() => {
     Promise.all([AsyncStorage.getItem(FAB_KEY), AsyncStorage.getItem(HISTORY_KEY)]).then(
@@ -111,20 +120,43 @@ export function DiceProvider({ children }: { children: React.ReactNode }) {
 
   const triggerRoll = useCallback(() => setRollState('rolling'), []);
 
-  const addRoll = useCallback((dice: DieRollResult[]) => {
-    const total = dice.reduce((sum, d) => sum + d.value, 0);
+  const addRoll = useCallback(
+    (dice: DieRollResult[]) => {
+      const total = dice.reduce((sum, d) => sum + d.value, 0);
+      const record: RollRecord = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        dice,
+        total,
+        timestamp: Date.now(),
+        modifier: pendingModifier ?? undefined,
+      };
+      setPendingModifier(null);
+      setHistoryStep('peek');
+      setRollHistory((prev) => {
+        const next = [record, ...prev].slice(0, MAX_HISTORY);
+        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+        return next;
+      });
+      setRollState('complete');
+    },
+    [pendingModifier],
+  );
+
+  const logPassive = useCallback((label: string, score: number) => {
     const record: RollRecord = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      dice,
-      total,
+      dice: [],
+      total: score,
       timestamp: Date.now(),
+      modifier: { label, value: score },
+      passive: true,
     };
+    setHistoryStep('peek');
     setRollHistory((prev) => {
       const next = [record, ...prev].slice(0, MAX_HISTORY);
       AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next));
       return next;
     });
-    setRollState('complete');
   }, []);
 
   const clearDice = useCallback(() => {
@@ -141,11 +173,14 @@ export function DiceProvider({ children }: { children: React.ReactNode }) {
         activeDice,
         rollState,
         rollHistory,
-        isHistoryExpanded,
-        setHistoryExpanded,
+        historyStep,
+        setHistoryStep,
+        pendingModifier,
+        setPendingModifier,
         placeDice,
         triggerRoll,
         addRoll,
+        logPassive,
         clearDice,
       }}
     >

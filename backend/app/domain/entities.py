@@ -100,3 +100,4 @@ class User(BaseModel):
     email: str
     password_hash: str = Field(default="", exclude=True)
     is_dm: bool = False
+    theme: str = 'dark'

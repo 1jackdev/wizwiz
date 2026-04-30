@@ -61,6 +61,10 @@ class UserRepo(ABC):
     def set_is_dm(self, user_id: UUID, is_dm: bool) -> None:
         pass
 
+    @abstractmethod
+    def set_theme(self, user_id: UUID, theme: str) -> None:
+        pass
+
 
 class CampaignRepo(ABC):
     @abstractmethod

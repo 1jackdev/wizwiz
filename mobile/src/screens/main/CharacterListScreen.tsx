@@ -12,13 +12,16 @@ import {
 import { CharacterSummary, listCharacters } from '../../api/character';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrentCharacter } from '../../context/CurrentCharacterContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CharacterStackParamList } from '../../navigation/CharactersNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 import { CharacterClass, Species } from '../../types';
 
 type Props = NativeStackScreenProps<CharacterStackParamList, 'CharacterList'>;
 
 export default function CharacterListScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { userId } = useAuth();
   const { currentCharacterId, setCurrentCharacter } = useCurrentCharacter();
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
@@ -129,7 +132,7 @@ export default function CharacterListScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
   emptyText: { fontSize: 16, color: colors.textSecondary, marginBottom: 20 },

@@ -25,7 +25,9 @@ import {
   ActionType,
   logCampaignAction,
 } from '../../api/campaignAction';
-import { colors } from '../../theme';
+import { CharacterDetail, getCharacter } from '../../api/character';
+import { useTheme } from '../../context/ThemeContext';
+import { ColorScheme } from '../../theme';
 
 const STANDARD_ACTIONS = [
   'Attack',
@@ -49,6 +51,8 @@ function CampaignPicker({
   characterId: string;
   onPick: (c: CampaignSummary) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,6 +62,10 @@ function CampaignPicker({
       try {
         setError('');
         const data = await listCharacterCampaigns(characterId);
+        if (data.length === 1) {
+          onPick(data[0]);
+          return;
+        }
         setCampaigns(data);
       } catch (e: any) {
         setError(e.message ?? 'Failed to load campaigns');
@@ -65,7 +73,7 @@ function CampaignPicker({
         setLoading(false);
       }
     })();
-  }, [characterId]);
+  }, [characterId, onPick]);
 
   if (loading) {
     return (
@@ -103,6 +111,8 @@ function CampaignPicker({
 }
 
 function ActionsContent() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const insets = useSafeAreaInsets();
   const { isFabVisible, activeDice, rollState, placeDice, clearDice } = useDice();
   const { currentCharacterId, currentCharacterName } = useCurrentCharacter();
@@ -111,12 +121,14 @@ function ActionsContent() {
   const [round, setRound] = useState<number | null>(null);
   const [turnActive, setTurnActive] = useState(false);
   const [actionUsed, setActionUsed] = useState<StandardAction | null>(null);
-  const [bonusUsed, setBonusUsed] = useState(false);
+  const [bonusActive, setBonusActive] = useState(false);
+  const [bonusAction, setBonusAction] = useState<StandardAction | null>(null);
   const [reactionUsed, setReactionUsed] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [campaign, setCampaign] = useState<CampaignSummary | null>(null);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [character, setCharacter] = useState<CharacterDetail | null>(null);
 
   useEffect(() => {
     setCampaign(null);
@@ -124,9 +136,15 @@ function ActionsContent() {
     setRound(null);
     setTurnActive(false);
     setActionUsed(null);
-    setBonusUsed(false);
+    setBonusActive(false);
+    setBonusAction(null);
     setReactionUsed(false);
     setConfirmed(false);
+    if (currentCharacterId) {
+      getCharacter(currentCharacterId).then(setCharacter).catch(() => {});
+    } else {
+      setCharacter(null);
+    }
   }, [currentCharacterId]);
 
   const logAction = useCallback(
@@ -166,7 +184,8 @@ function ActionsContent() {
 
   const resetSlots = () => {
     setActionUsed(null);
-    setBonusUsed(false);
+    setBonusActive(false);
+    setBonusAction(null);
     setReactionUsed(false);
     setConfirmed(false);
   };
@@ -216,10 +235,13 @@ function ActionsContent() {
     [confirmed, actionUsed],
   );
 
-  const handleBonus = useCallback(() => {
-    if (confirmed) return;
-    setBonusUsed((v) => !v);
-  }, [confirmed]);
+  const handleBonusAction = useCallback(
+    (name: StandardAction) => {
+      if (confirmed) return;
+      setBonusAction((prev) => (prev === name ? null : name));
+    },
+    [confirmed],
+  );
 
   const handleReaction = useCallback(() => {
     if (confirmed) return;
@@ -232,7 +254,7 @@ function ActionsContent() {
     try {
       const tasks: Promise<void>[] = [];
       if (actionUsed) tasks.push(logAction('action', actionUsed));
-      if (bonusUsed) tasks.push(logAction('bonus', null));
+      if (bonusAction) tasks.push(logAction('bonus', bonusAction));
       if (reactionUsed) tasks.push(logAction('reaction', null));
       await Promise.all(tasks);
       setConfirmed(true);
@@ -240,7 +262,7 @@ function ActionsContent() {
     } finally {
       setConfirming(false);
     }
-  }, [campaign, currentCharacterId, actionUsed, bonusUsed, reactionUsed, logAction]);
+  }, [campaign, currentCharacterId, actionUsed, bonusAction, reactionUsed, logAction]);
 
   const actionsEnabled = !inCombat || turnActive;
 
@@ -352,56 +374,87 @@ function ActionsContent() {
           </View>
         </View>
 
-        <View style={styles.slotRow}>
-          <View style={[styles.slot, styles.halfSlot]}>
-            <View style={styles.slotHeader}>
-              <Text style={styles.slotTitle}>Bonus</Text>
-              <Text style={styles.slotStatus}>
-                {bonusUsed ? 'Used' : actionsEnabled ? 'Avail' : '—'}
-              </Text>
-            </View>
+        <View style={styles.slot}>
+          <View style={styles.slotHeader}>
+            <Text style={styles.slotTitle}>Bonus Action</Text>
+            <Text style={styles.slotStatus}>
+              {bonusAction ? `Used: ${bonusAction}` : actionsEnabled ? 'Available' : 'Inactive'}
+            </Text>
+          </View>
+          {!bonusActive && !bonusAction ? (
             <TouchableOpacity
-              style={[
-                styles.slotButton,
-                (!actionsEnabled || (confirmed && !bonusUsed)) && styles.actionButtonDisabled,
-                bonusUsed && styles.actionButtonUsed,
-              ]}
-              onPress={handleBonus}
+              style={[styles.slotButton, (!actionsEnabled || confirmed) && styles.actionButtonDisabled]}
+              onPress={() => setBonusActive(true)}
               disabled={confirmed || !actionsEnabled}
               activeOpacity={0.8}
             >
-              <Text style={styles.slotButtonText}>{bonusUsed ? 'Used' : 'Use'}</Text>
+              <Text style={styles.slotButtonText}>Use Bonus Action</Text>
             </TouchableOpacity>
-          </View>
+          ) : (
+            <>
+              <View style={styles.actionGrid}>
+                {STANDARD_ACTIONS.map((name) => {
+                  const isUsed = bonusAction === name;
+                  const disabled = confirmed || !actionsEnabled || (bonusAction !== null && !isUsed);
+                  return (
+                    <TouchableOpacity
+                      key={name}
+                      style={[
+                        styles.actionButton,
+                        disabled && styles.actionButtonDisabled,
+                        isUsed && styles.actionButtonUsed,
+                      ]}
+                      onPress={() => handleBonusAction(name)}
+                      disabled={disabled}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.actionButtonText, disabled && styles.actionButtonTextDisabled]}>
+                        {name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {!confirmed && (
+                <TouchableOpacity
+                  style={styles.cancelBonusButton}
+                  onPress={() => { setBonusActive(false); setBonusAction(null); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cancelBonusText}>Cancel Bonus Action</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </View>
 
-          <View style={[styles.slot, styles.halfSlot]}>
-            <View style={styles.slotHeader}>
-              <Text style={styles.slotTitle}>Reaction</Text>
-              <Text style={styles.slotStatus}>{reactionUsed ? 'Used' : 'Avail'}</Text>
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.slotButton,
-                (confirmed && !reactionUsed) && styles.actionButtonDisabled,
-                reactionUsed && styles.actionButtonUsed,
-              ]}
-              onPress={handleReaction}
-              disabled={confirmed}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.slotButtonText}>{reactionUsed ? 'Used' : 'Use'}</Text>
-            </TouchableOpacity>
+        <View style={[styles.slot, styles.reactionSlot]}>
+          <View style={styles.slotHeader}>
+            <Text style={styles.slotTitle}>Reaction</Text>
+            <Text style={styles.slotStatus}>{reactionUsed ? 'Used' : 'Available'}</Text>
           </View>
+          <TouchableOpacity
+            style={[
+              styles.slotButton,
+              (confirmed && !reactionUsed) && styles.actionButtonDisabled,
+              reactionUsed && styles.actionButtonUsed,
+            ]}
+            onPress={handleReaction}
+            disabled={confirmed}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.slotButtonText}>{reactionUsed ? 'Used' : 'Use'}</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
           style={[
             styles.confirmButton,
             confirmed && styles.confirmButtonDone,
-            (!actionUsed && !bonusUsed && !reactionUsed && !confirmed) && styles.confirmButtonDisabled,
+            (!actionUsed && !bonusAction && !reactionUsed && !confirmed) && styles.confirmButtonDisabled,
           ]}
           onPress={handleConfirm}
-          disabled={confirmed || confirming || (!actionUsed && !bonusUsed && !reactionUsed)}
+          disabled={confirmed || confirming || (!actionUsed && !bonusAction && !reactionUsed)}
           activeOpacity={0.8}
         >
           {confirming ? (
@@ -429,7 +482,7 @@ function ActionsContent() {
       <DiceRollingView />
       <DiceHistory />
       {isFabVisible && <FloatingDiceButton onPress={handleFabPress} />}
-      <DiceSelectionSheet visible={sheetVisible} onRoll={handleRoll} onClose={handleSheetClose} />
+      <DiceSelectionSheet visible={sheetVisible} onRoll={handleRoll} onClose={handleSheetClose} character={character ?? undefined} />
       <CampaignActionHistory
         visible={historyVisible}
         onClose={() => setHistoryVisible(false)}
@@ -450,10 +503,10 @@ export default function ActionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1117',
+    backgroundColor: colors.bg,
   },
   content: {
     paddingHorizontal: 16,
@@ -473,45 +526,45 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#F9FAFB',
+    color: colors.text,
     flexShrink: 1,
     marginRight: 8,
   },
   combatChip: {
-    backgroundColor: '#1a1f2e',
+    backgroundColor: colors.bgCard,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.border,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   combatChipActive: {
-    backgroundColor: '#4338CA',
-    borderColor: '#6366f1',
+    backgroundColor: colors.accentDisabled,
+    borderColor: colors.accent,
   },
   combatChipText: {
-    color: '#E5E7EB',
+    color: colors.text,
     fontSize: 12,
     fontWeight: '600',
   },
   campaignRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1f2e',
+    backgroundColor: colors.bgCard,
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
     gap: 8,
   },
   campaignLabel: {
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   campaignName: {
-    color: '#F9FAFB',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginTop: 2,
@@ -521,19 +574,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#374151',
-    backgroundColor: '#0f1117',
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
   },
-  linkButtonText: { color: '#E5E7EB', fontSize: 12, fontWeight: '600' },
+  linkButtonText: { color: colors.text, fontSize: 12, fontWeight: '600' },
   turnButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.success,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 12,
   },
   turnButtonActive: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.error,
   },
   turnButtonText: {
     color: '#fff',
@@ -541,17 +594,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   slot: {
-    backgroundColor: '#1a1f2e',
+    backgroundColor: colors.bgCard,
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
   },
-  slotRow: {
-    flexDirection: 'row',
-    gap: 10,
+  reactionSlot: {
+    marginBottom: 10,
   },
-  halfSlot: {
-    flex: 1,
+  cancelBonusButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  cancelBonusText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
   },
   slotHeader: {
     flexDirection: 'row',
@@ -560,12 +619,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   slotTitle: {
-    color: '#F9FAFB',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
   slotStatus: {
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -578,54 +637,54 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '48%',
-    backgroundColor: '#0f1117',
+    backgroundColor: colors.bg,
     borderRadius: 8,
     paddingVertical: 8,
     alignItems: 'center',
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.border,
   },
   actionButtonDisabled: {
     opacity: 0.4,
   },
   actionButtonUsed: {
-    backgroundColor: '#4338CA',
-    borderColor: '#6366f1',
+    backgroundColor: colors.accentDisabled,
+    borderColor: colors.accent,
   },
   actionButtonText: {
-    color: '#E5E7EB',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '600',
   },
   actionButtonTextDisabled: {
-    color: '#9CA3AF',
+    color: colors.textSecondary,
   },
   slotButton: {
-    backgroundColor: '#0f1117',
+    backgroundColor: colors.bg,
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.border,
   },
   slotButtonText: {
-    color: '#E5E7EB',
+    color: colors.text,
     fontSize: 13,
     fontWeight: '600',
   },
   confirmButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 10,
   },
   confirmButtonDone: {
-    backgroundColor: '#16a34a',
+    backgroundColor: colors.success,
   },
   confirmButtonDisabled: {
-    backgroundColor: '#374151',
+    backgroundColor: colors.border,
     opacity: 0.5,
   },
   confirmButtonText: {
@@ -634,30 +693,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   footnote: {
-    color: '#6B7280',
+    color: colors.textMuted,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 8,
     fontStyle: 'italic',
   },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  empty: { color: '#9CA3AF', fontSize: 14, textAlign: 'center' },
-  error: { color: '#f87171', marginBottom: 12 },
+  empty: { color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
+  error: { color: colors.error, marginBottom: 12 },
   pickerContainer: { gap: 10 },
   pickerTitle: {
-    color: '#F9FAFB',
+    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 4,
   },
-  pickerSub: { color: '#9CA3AF', fontSize: 13, marginBottom: 12 },
+  pickerSub: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
   pickerCard: {
-    backgroundColor: '#1a1f2e',
+    backgroundColor: colors.bgCard,
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: colors.border,
   },
-  pickerCardName: { color: '#F9FAFB', fontSize: 15, fontWeight: '600' },
-  pickerCardSub: { color: '#9CA3AF', fontSize: 12, marginTop: 4 },
+  pickerCardName: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  pickerCardSub: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
 });

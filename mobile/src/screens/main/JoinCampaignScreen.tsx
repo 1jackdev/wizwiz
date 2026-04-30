@@ -13,13 +13,16 @@ import {
 import { joinCampaign } from '../../api/campaign';
 import { CharacterSummary, listCharacters } from '../../api/character';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { CharacterStackParamList } from '../../navigation/CharactersNavigator';
-import { colors } from '../../theme';
+import { ColorScheme } from '../../theme';
 import { CharacterClass } from '../../types';
 
 type Props = NativeStackScreenProps<CharacterStackParamList, 'JoinCampaign'>;
 
 export default function JoinCampaignScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { userId } = useAuth();
   const [characters, setCharacters] = useState<CharacterSummary[]>([]);
   const [selectedCharId, setSelectedCharId] = useState<string | null>(null);
@@ -108,7 +111,7 @@ export default function JoinCampaignScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ColorScheme) => StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: colors.bg, gap: 12 },
   label: {
     color: colors.textSecondary,

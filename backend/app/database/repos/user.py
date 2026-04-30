@@ -55,3 +55,10 @@ class UserDB(UserRepo):
             raise ValueError("User not found")
         orm.is_dm = is_dm
         self.db.commit()
+
+    def set_theme(self, user_id: UUID, theme: str) -> None:
+        orm = self.db.get(UserAccountORM, user_id)
+        if orm is None:
+            raise ValueError("User not found")
+        orm.theme = theme
+        self.db.commit()

@@ -6,13 +6,13 @@ from app.containers import container
 from app.domain.abstractions import UserRepo
 from app.domain.entities import User
 from app.domain.messages import CreateUser, PromoteToDm
-from app.http.schemas.user import CreateUserSchema, UserSchema
+from app.http.schemas.user import CreateUserSchema, UpdateThemeSchema, UserSchema
 
 router = APIRouter(prefix="/user")
 
 
 def _to_schema(user: User) -> UserSchema:
-    return UserSchema(id=user.id, email=user.email, is_dm=user.is_dm)
+    return UserSchema(id=user.id, email=user.email, is_dm=user.is_dm, theme=user.theme)
 
 
 @router.get("/search")
@@ -40,6 +40,16 @@ async def create_user(schema: CreateUserSchema) -> Response:
     bus.handle_msg(msg)
     container.db.scoped_session().commit()
     return Response(status_code=201)
+
+
+@router.patch("/{user_id}/theme")
+async def update_theme(user_id: UUID, schema: UpdateThemeSchema) -> UserSchema:
+    user_repo: UserRepo = container.db().user_repo()
+    user_repo.set_theme(user_id, schema.theme)
+    user = user_repo.get_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404)
+    return _to_schema(user)
 
 
 @router.post("/{user_id}/promote_dm")

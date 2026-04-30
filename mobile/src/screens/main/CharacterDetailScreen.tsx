@@ -1,14 +1,23 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { CharacterDetail, getCharacter, updateCharacter } from '../../api/character';
 import { useCurrentCharacter } from '../../context/CurrentCharacterContext';
 import { CharacterStackParamList } from '../../navigation/CharactersNavigator';
 import { CharacterClass, Species } from '../../types';
-import { NavRow, SectionHeader, SelectField, TappableField } from './CharacterDetail/fields';
+import { useTheme } from '../../context/ThemeContext';
+import { SectionHeader, SelectField, TappableField } from './CharacterDetail/fields';
 import { InputModal, StepperModal } from './CharacterDetail/modals';
-import { styles } from './CharacterDetail/styles';
+import { createStyles } from './CharacterDetail/styles';
 
 type Props = NativeStackScreenProps<CharacterStackParamList, 'CharacterDetail'>;
 
@@ -16,6 +25,8 @@ const CHARACTER_CLASS_OPTIONS = Object.values(CharacterClass ?? {});
 const SPECIES_OPTIONS = Object.values(Species ?? {});
 
 export default function CharacterDetailScreen({ route, navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { characterId } = route.params;
   const { currentCharacterId, setCurrentCharacter } = useCurrentCharacter();
 
@@ -190,12 +201,11 @@ export default function CharacterDetailScreen({ route, navigation }: Props) {
         />
       )}
 
-      <SectionHeader title="Stats" />
-      <NavRow label="Abilities" onPress={() => navigation.navigate('Abilities', { characterId })} />
-      <NavRow label="Skills" onPress={() => navigation.navigate('Skills', { characterId })} />
-
       <TouchableOpacity
-        style={[styles.setCurrentButton, currentCharacterId === characterId && styles.setCurrentButtonActive]}
+        style={[
+          styles.setCurrentButton,
+          currentCharacterId === characterId && styles.setCurrentButtonActive,
+        ]}
         onPress={() => setCurrentCharacter(characterId, name)}
         disabled={currentCharacterId === characterId}
         activeOpacity={0.8}
